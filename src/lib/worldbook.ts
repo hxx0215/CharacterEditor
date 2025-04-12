@@ -85,6 +85,20 @@ export async function updateCharacterBookEntriesEnable(entryId: number, bookId: 
   }
 }
 
+export async function updateBookEntry(
+  bookId: number,
+  value: any,
+) {
+  try {
+    const rows = await db.characterBook.update(bookId, {
+      [`entries` as any]: value,
+    });
+    return rows
+  } catch (e) {
+    console.log(e);
+  }
+}
+
 export async function updateBookEntryItem(
   bookId: number,
   entryIndex: number,

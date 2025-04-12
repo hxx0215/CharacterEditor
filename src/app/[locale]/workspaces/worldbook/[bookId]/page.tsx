@@ -31,13 +31,18 @@ import { useRouter } from '@/i18n/routing';
 import {
   addCharacterBookEntries,
   deleteCharacterBookEntries,
+  getCharacterBook,
+  getCharacterBookEntries,
+  updateBookEntry,
   updateBookEntryItem
 } from '@/lib/worldbook';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { get } from 'http';
 import { EllipsisVerticalIcon, PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 export const runtime = 'edge';
 
@@ -95,6 +100,25 @@ function EntrieLists() {
     setIsDeleteCharacterBookEntrieModal(true);
   };
 
+  const handleCopyEntry = async (index:number) =>{
+    try{
+      const entry = await getCharacterBook(Number(params.bookId));
+      if(!entry)return
+      const entries = entry.entries
+      const newEntries = [...entries, {...entries[index]}]
+      const rows = await updateBookEntry(Number(params.bookId), newEntries)
+      if(rows){
+        toast.success(t("Success.copySuccess"))
+      }
+    }catch(error){
+      if(error instanceof Error){
+        toast.error(error.message)
+      }
+      toast.error("Copy Failed")
+    }
+
+  }
+
   return (
     <>
       <Table>
@@ -124,6 +148,9 @@ function EntrieLists() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEditEntries(index)}>
                           {t('edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleCopyEntry(index)}>
+                          {t('copy')}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDeleteCharacterBookEntrie(index)}
