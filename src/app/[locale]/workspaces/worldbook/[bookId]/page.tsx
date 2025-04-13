@@ -189,10 +189,15 @@ function DeleteCharacterBookEntrieModal({
 }) {
   const t = useTranslations();
   const params = useParams();
-  const bookId = Number(params.id);
+  const bookId = Number(params.bookId);
   const handleDeleteCharacter = async () => {
-    deleteCharacterBookEntries(bookId as number, index);
+    try{
+    deleteCharacterBookEntries(bookId, index);
     setIsOpen(false);
+    }catch(error){
+      console.log(error)
+    }
+
   };
   return (
     <AlertDialog open={isopen}>

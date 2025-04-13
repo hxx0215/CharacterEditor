@@ -387,7 +387,7 @@ function Depth() {
       ) : (
         <div className="w-[80px]">
           <Label>{t('Worldbook.depth')}</Label>
-          <Input value={entries?.extensions.depth} disabled />
+          <Input value={entries?.extensions.depth ?? 4} disabled />
         </div>
       )}
     </>
@@ -414,7 +414,7 @@ function Order() {
           min={0}
           max={1000}
           step={1}
-          value={entries?.insertion_order}
+          value={entries?.insertion_order ?? 0}
           onChange={(e) => handleUpdate(Number(e.target.value))}
         />
       </div>
@@ -442,7 +442,7 @@ function Probability() {
           min={0}
           max={1000}
           step={1}
-          value={entries?.extensions.probability}
+          value={entries?.extensions.probability ?? 100}
           onChange={(e) => handleUpdate(Number(e.target.value))}
         />
       </div>
