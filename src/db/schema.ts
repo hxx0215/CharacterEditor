@@ -53,6 +53,7 @@ interface CharacterBookTable {
     constant?: boolean;
     position?: string;
     vectorized?: boolean;
+    [key: string]: any
   }>;
 }
 
