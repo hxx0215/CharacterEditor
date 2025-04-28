@@ -33,6 +33,13 @@ export function getAllCharacterBookLists() {
   return rows;
 }
 
+export function useLiveCharacterBook(id: number | undefined) {
+  return useLiveQuery(async () => {
+    if (!id) return null;
+    return db.characterBook.get(id);
+  }, [id]);
+}
+
 export async function getCharacterBook(id: number) {
   try {
     const rows = db.characterBook.get(id).then((row) => {
@@ -96,6 +103,14 @@ export async function updateBookEntry(
     return rows
   } catch (e) {
     console.log(e);
+  }
+}
+
+export async function updateCharacterBookName(id: number, name: string) {
+  try {
+    await db.characterBook.update(id, { name: name });
+  } catch (error) {
+    console.log(error);
   }
 }
 

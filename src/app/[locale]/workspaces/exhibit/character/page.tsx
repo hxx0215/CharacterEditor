@@ -40,6 +40,7 @@ export const runtime = 'edge';
 
 const addCharacterModalAtom = atom(false);
 const characterCoverModalAtom = atom(false);
+const characterNameModalAtom = atom(false);
 const importCharacterModalAtom = atom(false);
 
 function page() {
@@ -52,6 +53,7 @@ function page() {
       <AddCharacterModal />
       <ChangeCoverModal />
       <ImportCharacterModal />
+      <ChangeNameModal />
     </>
   );
 }
@@ -108,6 +110,7 @@ function CharacterLists() {
   const [deleteCid, setDeleteCid] = useState<Number>();
   const [isDeleteCharacterModal, setIsDeleteCharacterModal] = useState(false);
   const [, setIsChangeCoverModal] = useAtom(characterCoverModalAtom);
+  const [, setIsChangeNameModal] = useAtom(characterNameModalAtom);
   const handleDeleteCharacter = (id: number) => {
     setDeleteCid(id);
     setIsDeleteCharacterModal(true);
@@ -125,6 +128,12 @@ function CharacterLists() {
     setIsChangeCoverModal(true);
     setActionCharacterId(id);
   };
+  
+  const handleChangeName = (id: number) => {
+    setIsChangeNameModal(true);
+    setActionCharacterId(id);
+  };
+
   const lists = getAllCharacterLists();
   return (
     <>
@@ -161,6 +170,9 @@ function CharacterLists() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleChangeCover(list.id)}>
                       {t('Character.change_cover')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
+                      Change Name
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="hove:text-red-400 text-red-500"
@@ -199,6 +211,9 @@ function CharacterLists() {
                   <DropdownMenuItem onClick={() => handleChangeCover(list.id)}>
                     {t('Character.change_cover')}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
+                      Change Name
+                    </DropdownMenuItem>
                   <DropdownMenuItem
                     className="hove:text-red-400 text-red-500"
                     onClick={() => handleDeleteCharacter(list.id)}
@@ -255,6 +270,9 @@ function CharacterLists() {
                     <DropdownMenuItem onClick={() => handleChangeCover(list.id)}>
                       {t('Character.change_cover')}
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
+                      Change Name
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className="hove:text-red-400 text-red-500"
                       onClick={() => handleDeleteCharacter(list.id)}
@@ -298,6 +316,9 @@ function CharacterLists() {
                   <DropdownMenuItem onClick={() => handleChangeCover(list.id)}>
                     {t('Character.change_cover')}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
+                      Change Name
+                    </DropdownMenuItem>
                   <DropdownMenuItem
                     className="hove:text-red-400 text-red-500"
                     onClick={() => handleDeleteCharacter(list.id)}
@@ -469,6 +490,52 @@ function ChangeCoverModal() {
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsShow(false)}>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleUpdateCover}>{t('ok')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+function ChangeNameModal() {
+  const t = useTranslations();
+  const [isShow, setIsShow] = useAtom(characterNameModalAtom);
+  const [cid] = useAtom(selectedCharacterIdAtom);
+  const [name, setName] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const item = await db.character.get(cid);
+      const name = item?.name;
+
+      if (name) {
+        setName(name);
+      }
+    };
+
+    fetchData();
+  }, [cid]);
+
+  const handleUpdateName = () => {
+    db.character.update(cid, {
+      name: name,
+    });
+    setIsShow(false);
+    toast.success('OK');
+  };
+  return (
+    <>
+      <AlertDialog open={isShow}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Character.change_cover')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <Input value={name} onChange={(e)=>setName(e.target.value)}/>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsShow(false)}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateName}>{t('ok')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

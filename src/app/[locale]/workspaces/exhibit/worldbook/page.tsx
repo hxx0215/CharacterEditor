@@ -45,6 +45,8 @@ import {
   exportWorldBook,
   getAllCharacterBookLists,
   importCharacterBook,
+  updateCharacterBookName,
+  useLiveCharacterBook,
 } from '@/lib/worldbook';
 import { atom, useAtom } from 'jotai';
 import { CopyXIcon, EllipsisVerticalIcon, ImportIcon, PlusIcon } from 'lucide-react';
@@ -55,23 +57,25 @@ import { toast } from 'sonner';
 export const runtime = 'edge';
 
 const newWorldBookModalAtom = atom(false);
+const changeNameModalAtom = atom(false)
+const actionAtom = atom<number | undefined>(undefined)
 
-function page() {
+function Page() {
   return (
     <>
       <Header />
       <WorldbookLists />
       <NewCharacterBookModal />
+      <ChangeNameModel />
     </>
   );
 }
 
-export default page;
+export default Page;
 
 function Header() {
   const t = useTranslations();
   const [, setNewModal] = useAtom(newWorldBookModalAtom);
-
   return (
     <div className="flex justify-between">
       <div className="font-bold">{t('worldbook')}🚧</div>
@@ -94,6 +98,8 @@ function WorldbookLists() {
   const router = useRouter();
   const [deleteCharacterBookId, setDeleteCharacterBookId] = useState<Number>();
   const [isDeleteCharacterBookModal, setIsDeleteCharacterBookModal] = useState(false);
+  const [,setIsNameModalShow] = useAtom(changeNameModalAtom)
+  const [action,setAction] = useAtom(actionAtom)
   const handleDeleteCharacterBook = (id: number) => {
     setDeleteCharacterBookId(id);
     setIsDeleteCharacterBookModal(true);
@@ -104,6 +110,11 @@ function WorldbookLists() {
   const handleExportWorldBook = (id: number) => {
     exportWorldBook(id);
     toast.success(t('ok'));
+  };
+
+  const handleChangeWorldBookName = (id: number) => {
+    setAction(id)
+    setIsNameModalShow(true)
   };
   return (
     <>
@@ -134,6 +145,9 @@ function WorldbookLists() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleExportWorldBook(list.id)}>
                       {t('export')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleChangeWorldBookName(list.id)}>
+                      Change Name
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleDeleteCharacterBook(list.id)}
@@ -254,3 +268,49 @@ const DeleteDuplicateWorldBook = () => {
     </AlertDialog>
   );
 };
+
+function ChangeNameModel() {
+  const [isShow, setIsShow] = useAtom(changeNameModalAtom);
+  const [action, setAction] = useAtom(actionAtom);
+  const [name, setName] = useState("");
+  const t = useTranslations();
+  const worldbook = useLiveCharacterBook(action);
+
+  React.useEffect(() => {
+    if (worldbook?.name) {
+      setName(worldbook.name);
+    }
+  }, [worldbook]);
+
+  const handleChangeName = async () => {
+    if (!action) return;
+    try {
+      await updateCharacterBookName(action, name);
+      setIsShow(false);
+      toast.success(t("success"));
+    } catch (error) {
+      toast.error(t("error.unknown"));
+    }
+  };
+
+  return (
+    <AlertDialog open={isShow} onOpenChange={setIsShow}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t('Character.change_cover')}</AlertDialogTitle>
+          <AlertDialogDescription>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setIsShow(false)}>
+            {t('cancel')}
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleChangeName}>
+            {t('ok')}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
