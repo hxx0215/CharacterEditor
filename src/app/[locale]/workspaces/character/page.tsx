@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from '@/i18n/routing';
-import { getCharacterField, usePageGuard } from '@/lib/character';
+import { useCharacterField, usePageGuard } from '@/lib/character';
 import { selectedCharacterIdAtom } from '@/store/action';
 import { useAtom } from 'jotai';
 import {
@@ -100,18 +100,19 @@ const navlists = [
 function Header() {
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [name, setName] = useState('');
-  const fetchName = async () => {
-    try {
-      const rows = await getCharacterField(cid, 'name');
-      if (!rows) return;
-      setName(rows);
-    } catch (e) {
-      console.log(e);
-    }
-  };
+  const getCharacterField = useCharacterField()
   useEffect(() => {
+    const fetchName = async () => {
+      try {
+        const rows = await getCharacterField(cid, 'name');
+        if (!rows) return;
+        setName(rows);
+      } catch (e) {
+        console.log(e);
+      }
+    };
     fetchName();
-  }, [cid]);
+  }, [cid, getCharacterField]);
   return <div className="font-bold">{name}</div>;
 }
 

@@ -9,7 +9,7 @@ import { useOnClickOutside } from 'usehooks-ts';
 
 import { toast } from '@/hooks/use-toast';
 import { useRouter } from '@/i18n/routing';
-import { getCharacterField } from '@/lib/character';
+import { useCharacterField } from '@/lib/character';
 import { cn } from '@/lib/utils';
 import { selectedCharacterIdAtom } from '@/store/action';
 
@@ -77,6 +77,7 @@ export function ExpandableTabs({
 
   const [cid] = useAtom(selectedCharacterIdAtom)
   const [cover , setCover ] = React.useState("")
+  const getCharacterField = useCharacterField()
   React.useEffect(()=>{
     if(!cid) return
     const fetchCover = async ()=>{
@@ -84,7 +85,7 @@ export function ExpandableTabs({
       setCover(coverBase64 as string)
     }
     fetchCover()
-  },[cid])
+  },[cid, getCharacterField, setCover])
   return (
     <div
       ref={outsideClickRef}

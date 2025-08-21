@@ -1,5 +1,6 @@
 'use client';
 
+import { useDB } from '@/components/db-provider';
 import { TokenCounter } from '@/components/tokenCounter';
 import {
   AlertDialog,
@@ -24,8 +25,8 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { db } from '@/db/schema';
-import { updateBookEntryItem } from '@/lib/worldbook';
+// import { db } from '@/db/schema';
+import { useUpdateBookEntryItem } from '@/lib/worldbook';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { pullAt } from 'es-toolkit';
 import { atom, useAtom } from 'jotai';
@@ -35,7 +36,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 interface CharacterBookEntries {
   keys: Array<string>;
@@ -67,6 +68,7 @@ function Header() {
   const [, setEntries] = useAtom(entriesAtom);
   const t = useTranslations();
   const params = useParams();
+  const db = useDB();
   const entries = useLiveQuery(() =>
     db.characterBook.get(Number(params.bookId)).then((item) => {
       if (item) {
@@ -118,6 +120,7 @@ function Content() {
   const params = useParams();
   const [entries] = useAtom(entriesAtom);
   const [inputValue, setInputValue] = useState(entries?.content || '');
+  const updateBookEntryItem = useUpdateBookEntryItem()
 
   const handleUpdate = (value: string) => {
     updateBookEntryItem(Number(params.bookId), Number(params.entryId), 'content', value);
@@ -127,7 +130,7 @@ function Content() {
     if (entries?.content !== undefined) {
       setInputValue(entries.content);
     }
-  }, [entries?.content]);
+  }, [entries?.content, setInputValue]);
 
   return (
     <>
@@ -154,6 +157,7 @@ function EntryKeys({ field }: { field: 'keys' | 'secondary_keys' }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState<number | null>();
   const [name, setName] = useState<string>();
+  const updateBookEntryItem = useUpdateBookEntryItem()
   const handleDeleteModal = (index: number) => {
     setDeleteIndex(index);
     setIsDeleteModalOpen(true);
@@ -246,6 +250,7 @@ function Comment() {
   const params = useParams();
   const [entries] = useAtom(entriesAtom);
   const [inputValue, setInputValue] = useState('');
+  const updateBookEntryItem = useUpdateBookEntryItem()
   const handleUpdate = (value: string) => {
     updateBookEntryItem(Number(params.bookId), Number(params.entryId), 'comment', value);
   };
@@ -274,6 +279,7 @@ function Stratgy() {
   const t = useTranslations();
   const params = useParams();
   const [entries] = useAtom(entriesAtom);
+  const updateBookEntryItem = useUpdateBookEntryItem()
   const handleUpdate = (value: string) => {
     if (value == 'vectorized') {
       updateBookEntryItem(Number(params.bookId), Number(params.entryId), 'constant', false);
@@ -321,6 +327,7 @@ function Position() {
   const t = useTranslations();
   const params = useParams();
   const [entries] = useAtom(entriesAtom);
+  const updateBookEntryItem = useUpdateBookEntryItem()
   const handleUpdate = (value: string) => {
     updateBookEntryItem(
       Number(params.bookId),
@@ -359,6 +366,7 @@ function Depth() {
   const t = useTranslations();
   const params = useParams();
   const [entries] = useAtom(entriesAtom);
+  const updateBookEntryItem = useUpdateBookEntryItem()
   const handleUpdate = (value: number) => {
     updateBookEntryItem(
       Number(params.bookId),
@@ -398,6 +406,7 @@ function Order() {
   const t = useTranslations();
   const params = useParams();
   const [entries] = useAtom(entriesAtom);
+  const updateBookEntryItem = useUpdateBookEntryItem()
   const handleUpdate = (value: number) => {
     updateBookEntryItem(
       Number(params.bookId),
@@ -426,6 +435,7 @@ function Probability() {
   const t = useTranslations();
   const params = useParams();
   const [entries] = useAtom(entriesAtom);
+  const updateBookEntryItem = useUpdateBookEntryItem()
   const handleUpdate = (value: number) => {
     updateBookEntryItem(
       Number(params.bookId),
@@ -454,6 +464,7 @@ function SelectiveLogic() {
   const t = useTranslations();
   const params = useParams();
   const [entries] = useAtom(entriesAtom);
+  const updateBookEntryItem = useUpdateBookEntryItem()
   const handleUpdate = (value: string) => {
     updateBookEntryItem(
       Number(params.bookId),

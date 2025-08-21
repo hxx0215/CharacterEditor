@@ -1,196 +1,553 @@
 'use client';
 
-import RotatingText from '@/components/bootstrapHero';
-import { ModeToggle } from '@/components/mode-toggle';
-import { Link } from '@/i18n/routing';
-import { ActivityIcon, Code, PenIcon } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button, buttonVariants } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+// import { db } from '@/db/schema';
+import { useDB } from '@/components/db-provider';
+import { useRouter } from '@/i18n/routing';
+import {
+  useAddCharacter,
+  useCopyCharacter,
+  useDeleteCharacter,
+  useAllCharacterLists,
+  useImportCharacter,
+  useImportCharacters
+} from '@/lib/character';
+import { selectedCharacterIdAtom } from '@/store/action';
+import { atom, useAtom } from 'jotai';
+import { EllipsisVerticalIcon, FileStackIcon, ImportIcon, PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
-export const runtime = 'edge';
-export default function Home() {
-  const t = useTranslations();
+// export const runtime = 'edge';
+
+const addCharacterModalAtom = atom(false);
+const characterCoverModalAtom = atom(false);
+const characterNameModalAtom = atom(false);
+const importCharacterModalAtom = atom(false);
+
+function page() {
   return (
     <>
-      <div className="flex flex-1 justify-end p-4">
-        <ModeToggle />
+      <Header />
+      <div className="mt-4 h-full overflow-y-auto">
+        <CharacterLists />
       </div>
-      <RotatingText
-          texts={[
-            '亲爱的欢迎回来',
-            '親愛的歡迎回來',
-            'Darling, welcome back',
-            '親愛なる、お帰りなさい',
-            '친애하는, 환영합니다',
-            'Дорогой, добро пожаловать обратно',
-            'Cher, bienvenue de retour',
-            'Lieber, willkommen zurück',
-            'Querido, bienvenido de vuelta',
-            'Caro, bem-vindo de volta',
-            'Caro, bentornato',
-            'Beste, welkom terug',
-            'Kära, välkommen tillbaka',
-            'Kære, velkommen tilbage',
-            'Kjære, velkommen tilbake',
-            'Hyvä, tervetuloa takaisin',
-            'Szerető, üdv újra itt',
-            'Drogi, witaj z powrotem',
-            'Drahý, vitajte späť',
-            'Drahý, vítejte zpět',
-            'Dragi, dobrodošli nazad',
-            'Αγαπητέ, καλώς ήρθες πίσω',
-            'Dragi, dobrodošli nazaj',
-          ]}
-          mainClassName="px-2 sm:px-2 md:px-3 text-2xl overflow-hidden py-0.5 sm:py-1 md:py-2 justify-center rounded-lg"
-          staggerFrom={'last'}
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '-120%' }}
-          staggerDuration={0.025}
-          splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
-          transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-          rotationInterval={5000}
-        />
-      <div className="mx-auto max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        
-        <div className="grid items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Link
-            className="group flex size-full gap-y-6 rounded-lg p-5 hover:bg-yellow-50 focus:bg-yellow-50 focus:outline-none dark:hover:bg-neutral-800 dark:focus:bg-neutral-800"
-            href="/workspaces/exhibit/character"
-          >
-            <svg
-              className="me-6 mt-0.5 size-8 shrink-0 text-stone-800 dark:text-neutral-200"
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <PenIcon />
-            </svg>
+      <AddCharacterModal />
+      <ChangeCoverModal />
+      <ImportCharacterModal />
+      <ChangeNameModal />
+    </>
+  );
+}
 
-            <div>
-              <div>
-                <h3 className="block font-bold text-stone-800 dark:text-white">
-                  {t('edit character')}
-                </h3>
-              </div>
+export default page;
 
-              <p className="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold text-stone-800 dark:text-neutral-200">
-                {t('workspaces')}
-                <svg
-                  className="size-4 shrink-0 transition ease-in-out group-hover:translate-x-1 group-focus:translate-x-1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </p>
-            </div>
-          </Link>
-          <Link
-            className="group flex size-full gap-y-6 rounded-lg p-5 hover:bg-yellow-50 focus:bg-yellow-50 focus:outline-none dark:hover:bg-neutral-800 dark:focus:bg-neutral-800"
-            href="https://github.com/oocmoe/CharacterEditor"
-            target="_blanks"
-          >
-            <svg
-              className="me-6 mt-0.5 size-8 shrink-0 text-stone-800 dark:text-neutral-200"
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <Code />
-            </svg>
-
-            <div>
-              <div>
-                <h3 className="block font-bold text-stone-800 dark:text-white">{t('code')}</h3>
-                <p className="text-stone-600 dark:text-neutral-400"></p>
-              </div>
-
-              <p className="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold text-stone-800 dark:text-neutral-200">
-                Github
-                <svg
-                  className="size-4 shrink-0 transition ease-in-out group-hover:translate-x-1 group-focus:translate-x-1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </p>
-            </div>
-          </Link>
-
-          <Link
-            className="group flex size-full gap-y-6 rounded-lg p-5 hover:bg-yellow-50 focus:bg-yellow-50 focus:outline-none dark:hover:bg-neutral-800 dark:focus:bg-neutral-800"
-            href="https://status.ooc.moe"
-            target="_blank"
-          >
-            <svg
-              className="me-6 mt-0.5 size-8 shrink-0 text-stone-800 dark:text-neutral-200"
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <ActivityIcon />
-            </svg>
-
-            <div>
-              <div>
-                <h3 className="block font-bold text-stone-800 dark:text-white">{t('status')}</h3>
-                <p className="text-stone-600 dark:text-neutral-400"></p>
-              </div>
-
-              <p className="mt-3 inline-flex items-center gap-x-1 text-sm font-semibold text-stone-800 dark:text-neutral-200">
-                Status
-                <svg
-                  className="size-4 shrink-0 transition ease-in-out group-hover:translate-x-1 group-focus:translate-x-1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </p>
-            </div>
-          </Link>
-        </div>
+function Header() {
+  const t = useTranslations();
+  const [, setIsAddCharacterModalShow] = useAtom(addCharacterModalAtom);
+  const [, setIsImportCharacterModalShow] = useAtom(importCharacterModalAtom);
+  const importCharacters = useImportCharacters()
+  const importCharacter = useImportCharacter()
+  return (
+    <div className="sticky flex items-center justify-between">
+      <div className="font-bold">{t('character')}</div>
+      <div className="flex gap-x-2">
+        <Button variant="outline" size="icon" onClick={() => setIsAddCharacterModalShow(true)}>
+          <PlusIcon />
+        </Button>
+        <Button variant="outline" size="icon" onClick={importCharacters}>
+          <FileStackIcon />
+        </Button>
+        <Button variant="outline" size="icon" onClick={importCharacter}>
+          <ImportIcon />
+        </Button>
       </div>
+    </div>
+  );
+}
+
+function ImportCharacterModal() {
+  const t = useTranslations();
+  const [isOpen, setIsOpen] = useAtom(importCharacterModalAtom);
+  return (
+    <>
+      <AlertDialog open={isOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('import')}</AlertDialogTitle>
+            <AlertDialogDescription></AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsOpen(false)}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction>{t('import')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+function CharacterLists() {
+  const router = useRouter();
+  const t = useTranslations();
+  const [actionCharacterid, setActionCharacterId] = useAtom(selectedCharacterIdAtom);
+  const [deleteCid, setDeleteCid] = useState<Number>();
+  const [isDeleteCharacterModal, setIsDeleteCharacterModal] = useState(false);
+  const [, setIsChangeCoverModal] = useAtom(characterCoverModalAtom);
+  const [, setIsChangeNameModal] = useAtom(characterNameModalAtom);
+  const copyCharacter = useCopyCharacter()
+  const handleDeleteCharacter = (id: number) => {
+    setDeleteCid(id);
+    setIsDeleteCharacterModal(true);
+  };
+  const handleActionCharacter = (id: number, name: string) => {
+    setActionCharacterId(id);
+    toast.success(t('selected') + name, {
+      id: 'actionCharacter',
+    });
+  };
+  const handleExportCharacter = (id: number) => {
+    router.push(`/workspaces/exhibit/character/export/${id}`);
+  };
+  const handleChangeCover = (id: number) => {
+    setIsChangeCoverModal(true);
+    setActionCharacterId(id);
+  };
+  
+  const handleChangeName = (id: number) => {
+    setIsChangeNameModal(true);
+    setActionCharacterId(id);
+  };
+
+  const lists = useAllCharacterLists();
+  return (
+    <>
+      <ul className="3xl:grid-cols-8 4xl:grid-cols-9 5xl:grid-cols-10 6xl:grid-cols-11 7xl:grid-cols-12 hidden gap-x-4 gap-y-8 md:grid md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
+        {lists?.map((list) => {
+          if (list.id === actionCharacterid)
+            return (
+              <li key={list.id}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <div className="relative inline-block">
+                      <span className="absolute right-2 top-2 flex size-3">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex size-3 rounded-full bg-amber-500"></span>
+                      </span>
+                      <Image
+                        className="aspect-[3/4] h-full rounded-xl object-cover"
+                        src={list.cover}
+                        alt={list.name}
+                        width={521}
+                        height={521}
+                      />
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleActionCharacter(list.id, list.name)}>
+                      {t('edit')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExportCharacter(list.id)}>
+                      {t('export')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => copyCharacter(list.id)}>
+                      {t('copy')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleChangeCover(list.id)}>
+                      {t('Character.change_cover')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
+                      Change Name
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="hove:text-red-400 text-red-500"
+                      onClick={() => handleDeleteCharacter(list.id)}
+                    >
+                      {t('delete')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <div className="pointer-events-none truncate text-xs font-medium">{list.name}</div>
+                <div className="pointer-events-none truncate text-xs">{list.character_version}</div>
+              </li>
+            );
+          return (
+            <li key={list.id} className="group hover:opacity-90">
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Image
+                    className="aspect-[3/4] h-full rounded-xl object-cover"
+                    src={list.cover}
+                    alt={list.name}
+                    width={521}
+                    height={521}
+                  />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleActionCharacter(list.id, list.name)}>
+                    {t('edit')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExportCharacter(list.id)}>
+                    {t('export')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => copyCharacter(list.id)}>
+                    {t('copy')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleChangeCover(list.id)}>
+                    {t('Character.change_cover')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
+                      Change Name
+                    </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="hove:text-red-400 text-red-500"
+                    onClick={() => handleDeleteCharacter(list.id)}
+                  >
+                    {t('delete')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="pointer-events-none truncate text-xs font-medium">{list.name}</div>
+              <div className="pointer-events-none truncate text-xs">{list.character_version}</div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <ul className="grid grid-cols-1 gap-y-2 md:hidden">
+        {lists?.map((list) => {
+          if (list.id === actionCharacterid)
+            return (
+              <li key={list.id} className="grid grid-cols-2 items-center justify-between">
+                <div className="grid grid-cols-2 gap-x-2">
+                  <div className="relative inline-block">
+                    <Image
+                      className="aspect-[1/1] w-full object-cover"
+                      src={list.cover}
+                      alt={list.name}
+                      width={521}
+                      height={521}
+                    />
+                    <span className="absolute right-2 top-2 flex size-3">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex size-3 rounded-full bg-amber-500"></span>
+                    </span>
+                  </div>
+                  <div className="grid grid-rows-2">
+                    <div>{list.name}</div>
+                    <div>{list.character_version}</div>
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="ml-auto">
+                    <EllipsisVerticalIcon />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleActionCharacter(list.id, list.name)}>
+                      {t('edit')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExportCharacter(list.id)}>
+                      {t('export')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => copyCharacter(list.id)}>
+                      {t('copy')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleChangeCover(list.id)}>
+                      {t('Character.change_cover')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
+                      Change Name
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="hove:text-red-400 text-red-500"
+                      onClick={() => handleDeleteCharacter(list.id)}
+                    >
+                      {t('delete')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </li>
+            );
+          return (
+            <li key={list.id} className="grid grid-cols-2 items-center justify-between">
+              <div className="grid grid-cols-2 gap-x-2">
+                <Image
+                  className="aspect-[1/1] w-full object-cover"
+                  src={list.cover}
+                  alt={list.name}
+                  width={521}
+                  height={521}
+                />
+
+                <div className="grid grid-rows-2">
+                  <div>{list.name}</div>
+                  <div>{list.character_version}</div>
+                </div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="ml-auto">
+                  <EllipsisVerticalIcon />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleActionCharacter(list.id, list.name)}>
+                    {t('edit')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExportCharacter(list.id)}>
+                    {t('export')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => copyCharacter(list.id)}>
+                    {t('copy')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleChangeCover(list.id)}>
+                    {t('Character.change_cover')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
+                      Change Name
+                    </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="hove:text-red-400 text-red-500"
+                    onClick={() => handleDeleteCharacter(list.id)}
+                  >
+                    {t('delete')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </li>
+          );
+        })}
+      </ul>
+
+      <DeleteCharacterModal
+        isopen={isDeleteCharacterModal}
+        setIsOpen={setIsDeleteCharacterModal}
+        cid={deleteCid as number}
+      />
+    </>
+  );
+}
+
+function DeleteCharacterModal({
+  isopen,
+  setIsOpen,
+  cid,
+}: {
+  isopen: boolean;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  cid: number;
+}) {
+  const t = useTranslations();
+  const deleteCharacter = useDeleteCharacter()
+  const handleDeleteCharacter = async () => {
+    deleteCharacter(cid);
+    setIsOpen(false);
+    toast.error(t('dis'));
+  };
+  return (
+    <AlertDialog open={isopen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t('ays')}</AlertDialogTitle>
+          <AlertDialogDescription>{t('nrb')}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setIsOpen(false)}>{t('cancel')}</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDeleteCharacter}
+            className={buttonVariants({ variant: 'destructive' })}
+          >
+            {t('delete')}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function AddCharacterModal() {
+  const t = useTranslations();
+  const [isModalShow, setIsModalShow] = useAtom(addCharacterModalAtom);
+  const [name, setName] = useState('');
+  const [cover, setCover] = useState('');
+  const addCharacter = useAddCharacter()
+
+  useEffect(() => {
+    const loadImage = async () => {
+      try {
+        const response = await fetch('/Character.png');
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setCover(reader.result as string);
+        };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error('Error loading image:', error);
+      }
+    };
+    loadImage();
+  }, []);
+
+  const handleAddCharacter = () => {
+    addCharacter(name, cover);
+    setIsModalShow(false);
+    toast.success(t('ais') + name);
+    setName('');
+  };
+  return (
+    <AlertDialog open={isModalShow}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t('give_name')}</AlertDialogTitle>
+          <AlertDialogDescription>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setIsModalShow(false)}>{t('cancel')}</AlertDialogCancel>
+          <AlertDialogAction onClick={handleAddCharacter}>{t('new')}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function ChangeCoverModal() {
+  const t = useTranslations();
+  const [isShow, setIsShow] = useAtom(characterCoverModalAtom);
+  const [cid] = useAtom(selectedCharacterIdAtom);
+  const [cover, setCover] = useState('');
+  const db = useDB()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const item = await db.character.get(cid);
+      const cover = item?.cover;
+
+      if (cover) {
+        setCover(cover);
+      }
+    };
+
+    fetchData();
+  }, [cid, db]);
+  const handleChangeCover = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.png';
+    input.onchange = async (event: any) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          setCover(base64);
+        };
+        reader.readAsDataURL(file);
+      } catch (e) {
+        console.error('Error reading file:', e);
+      }
+    };
+    input.click();
+  };
+  const handleUpdateCover = () => {
+    const db = useDB()
+    db.character.update(cid, {
+      cover: cover,
+    });
+    setIsShow(false);
+    toast.success('OK');
+  };
+  return (
+    <>
+      <AlertDialog open={isShow}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Character.change_cover')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <Image
+                onClick={handleChangeCover}
+                src={cover}
+                alt="changeCover"
+                width={521}
+                height={521}
+                className="w-auto"
+              />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsShow(false)}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateCover}>{t('ok')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+function ChangeNameModal() {
+  const t = useTranslations();
+  const [isShow, setIsShow] = useAtom(characterNameModalAtom);
+  const [cid] = useAtom(selectedCharacterIdAtom);
+  const [name, setName] = useState('');
+  const db = useDB()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const item = await db.character.get(cid);
+      const name = item?.name;
+
+      if (name) {
+        setName(name);
+      }
+    };
+
+    fetchData();
+  }, [cid, db]);
+
+  const handleUpdateName = () => {
+    db.character.update(cid, {
+      name: name,
+    });
+    setIsShow(false);
+    toast.success('OK');
+  };
+  return (
+    <>
+      <AlertDialog open={isShow}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Character.change_cover')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <Input value={name} onChange={(e)=>setName(e.target.value)}/>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsShow(false)}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateName}>{t('ok')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

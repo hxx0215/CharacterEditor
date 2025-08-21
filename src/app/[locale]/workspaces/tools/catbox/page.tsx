@@ -27,7 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useRouter } from '@/i18n/routing';
-import { deleteGallery, getGally, newGallery } from '@/lib/gallery';
+import { useDeleteGallery, useGetGally, useNewGallery } from '@/lib/gallery';
 import { atom, useAtom } from 'jotai';
 import { PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -72,6 +72,7 @@ function Header() {
 function Gallery() {
   const t = useTranslations();
   const router = useRouter();
+  const getGally = useGetGally()
   const lists = getGally();
   const [, setDeleteModal] = useAtom(deleteGalleryModalAtom);
   const [deleteId, setDeleteId] = useAtom(deleteGalleryIdAtom);
@@ -122,6 +123,7 @@ function NewGalleryModal() {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useAtom(newGalleryModalAtom);
   const [input, setInput] = useState('');
+  const newGallery = useNewGallery()
   const handleNewGallery = async () => {
     const rows = await newGallery(input);
     if (rows == '!ERROR') {
@@ -160,6 +162,7 @@ function DeleteGalleryModal() {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useAtom(deleteGalleryModalAtom);
   const [deleteId, setDeleteId] = useAtom(deleteGalleryIdAtom);
+  const deleteGallery = useDeleteGallery()
   const handleCancel = () => {
     setDeleteId(null);
     setIsOpen(false);

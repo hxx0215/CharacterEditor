@@ -3,7 +3,7 @@
 import { TokenCounter } from '@/components/tokenCounter';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { getCharacterField, updateCharacter, usePageGuard } from '@/lib/character';
+import { useCharacterField, useUpdateCharacter, usePageGuard } from '@/lib/character';
 import { selectedCharacterIdAtom } from '@/store/action';
 import { debounce } from 'es-toolkit';
 import { useAtom } from 'jotai';
@@ -27,9 +27,11 @@ function Post_History_Instructions() {
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [inputValue, setInputValue] = useState<string>('');
   const t = useTranslations();
+  const updateCharacter = useUpdateCharacter()
   const handleChangeText = debounce(async (value: string) => {
     await updateCharacter(cid as number, 'data.post_history_instructions' as string, value);
   }, 1000);
+  const getCharacterField = useCharacterField()
 
   useEffect(() => {
     const fetchDefaultValue = async () => {
@@ -43,7 +45,7 @@ function Post_History_Instructions() {
       }
     };
     fetchDefaultValue();
-  }, [cid]);
+  }, [cid, getCharacterField]);
 
   return (
     <>

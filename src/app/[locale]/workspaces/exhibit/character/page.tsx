@@ -18,15 +18,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { db } from '@/db/schema';
+// import { db } from '@/db/schema';
+import { useDB } from '@/components/db-provider';
 import { useRouter } from '@/i18n/routing';
 import {
-  addCharacter,
-  copyCharacter,
-  deleteCharacter,
-  getAllCharacterLists,
-  importCharacter,
-  importCharacters,
+  useAddCharacter,
+  useCopyCharacter,
+  useDeleteCharacter,
+  useAllCharacterLists,
+  useImportCharacter,
+  useImportCharacters
 } from '@/lib/character';
 import { selectedCharacterIdAtom } from '@/store/action';
 import { atom, useAtom } from 'jotai';
@@ -36,7 +37,7 @@ import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 const addCharacterModalAtom = atom(false);
 const characterCoverModalAtom = atom(false);
@@ -64,6 +65,8 @@ function Header() {
   const t = useTranslations();
   const [, setIsAddCharacterModalShow] = useAtom(addCharacterModalAtom);
   const [, setIsImportCharacterModalShow] = useAtom(importCharacterModalAtom);
+  const importCharacters = useImportCharacters()
+  const importCharacter = useImportCharacter()
   return (
     <div className="sticky flex items-center justify-between">
       <div className="font-bold">{t('character')}</div>
@@ -111,6 +114,7 @@ function CharacterLists() {
   const [isDeleteCharacterModal, setIsDeleteCharacterModal] = useState(false);
   const [, setIsChangeCoverModal] = useAtom(characterCoverModalAtom);
   const [, setIsChangeNameModal] = useAtom(characterNameModalAtom);
+  const copyCharacter = useCopyCharacter()
   const handleDeleteCharacter = (id: number) => {
     setDeleteCid(id);
     setIsDeleteCharacterModal(true);
@@ -134,7 +138,7 @@ function CharacterLists() {
     setActionCharacterId(id);
   };
 
-  const lists = getAllCharacterLists();
+  const lists = useAllCharacterLists();
   return (
     <>
       <ul className="3xl:grid-cols-8 4xl:grid-cols-9 5xl:grid-cols-10 6xl:grid-cols-11 7xl:grid-cols-12 hidden gap-x-4 gap-y-8 md:grid md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
@@ -351,6 +355,7 @@ function DeleteCharacterModal({
   cid: number;
 }) {
   const t = useTranslations();
+  const deleteCharacter = useDeleteCharacter()
   const handleDeleteCharacter = async () => {
     deleteCharacter(cid);
     setIsOpen(false);
@@ -382,6 +387,7 @@ function AddCharacterModal() {
   const [isModalShow, setIsModalShow] = useAtom(addCharacterModalAtom);
   const [name, setName] = useState('');
   const [cover, setCover] = useState('');
+  const addCharacter = useAddCharacter()
 
   useEffect(() => {
     const loadImage = async () => {
@@ -429,6 +435,7 @@ function ChangeCoverModal() {
   const [isShow, setIsShow] = useAtom(characterCoverModalAtom);
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [cover, setCover] = useState('');
+  const db = useDB();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -441,7 +448,7 @@ function ChangeCoverModal() {
     };
 
     fetchData();
-  }, [cid]);
+  }, [cid, db]);
   const handleChangeCover = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -502,6 +509,7 @@ function ChangeNameModal() {
   const [isShow, setIsShow] = useAtom(characterNameModalAtom);
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [name, setName] = useState('');
+  const db = useDB()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -514,7 +522,7 @@ function ChangeNameModal() {
     };
 
     fetchData();
-  }, [cid]);
+  }, [cid, db]);
 
   const handleUpdateName = () => {
     db.character.update(cid, {

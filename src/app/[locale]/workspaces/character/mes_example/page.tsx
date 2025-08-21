@@ -3,7 +3,7 @@
 import { TokenCounter } from '@/components/tokenCounter';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { getCharacterField, updateSpecV1Character, usePageGuard } from '@/lib/character';
+import { useCharacterField, useUpdateSpecV1Character, usePageGuard } from '@/lib/character';
 import { selectedCharacterIdAtom } from '@/store/action';
 import { debounce } from 'es-toolkit';
 import { useAtom } from 'jotai';
@@ -27,9 +27,11 @@ function Mes_Example() {
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [inputValue, setInputValue] = useState<string>('');
   const t = useTranslations();
+  const updateSpecV1Character = useUpdateSpecV1Character()
   const handleChangeText = debounce(async (value: string) => {
     await updateSpecV1Character(cid as number, 'data', value);
   }, 1000);
+  const getCharacterField = useCharacterField()
 
   useEffect(() => {
     const fetchDefaultValue = async () => {

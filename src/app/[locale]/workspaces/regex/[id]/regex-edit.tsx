@@ -1,5 +1,6 @@
 'use client';
 
+import { useDB } from '@/components/db-provider';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -7,13 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { RegexScriptsTable, db } from '@/db/schema';
+import { RegexScriptsTable } from '@/db/schema';
 import {
-  updateFind_Regex,
-  updateIsEnable,
-  updateRegexItem,
-  updateReplaceString,
-  updateScript_Name,
+  useUpdateFindRegex,
+  useUpdateIsEnable,
+  useUpdateRegexItem,
+  useUpdateReplaceString,
+  useUpdateScriptName,
 } from '@/lib/regex';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { pull } from 'es-toolkit';
@@ -28,6 +29,7 @@ export default function RegexEdit() {
   const [regex, setRegex] = useAtom(regexAtom);
   const t = useTranslations();
   const parmas = useParams();
+  const db = useDB()
   useLiveQuery(() => {
     db.regexScripts.get(Number(parmas.id)).then((item) => {
       if (!item) return;
@@ -79,6 +81,7 @@ function Profile() {
 function ScriptSwitch() {
   const t = useTranslations();
   const [regex, setRegex] = useAtom(regexAtom);
+  const updateIsEnable = useUpdateIsEnable()
   const handleSwitch = async () => {
     if (!regex) return;
     updateIsEnable(regex.id);
@@ -94,9 +97,10 @@ function ScriptSwitch() {
 function ScriptName() {
   const t = useTranslations();
   const [regex, setRegex] = useAtom(regexAtom);
+  const updateScriptName = useUpdateScriptName()
   const handleChangeScriptName = async (value: string) => {
     if (!regex) return;
-    updateScript_Name(regex.id, value);
+    updateScriptName(regex.id, value);
   };
   return (
     <>
@@ -110,6 +114,7 @@ function Placement() {
   const t = useTranslations();
   const [regex, setRegex] = useAtom(regexAtom);
   const parmas = useParams();
+  const updateRegexItem = useUpdateRegexItem()
   const handleUpdate = (value: number) => {
     const placement = regex?.placement || [];
     if (placement.includes(value)) {
@@ -146,6 +151,7 @@ function MinDepth() {
   const t = useTranslations();
   const [regex, setRegex] = useAtom(regexAtom);
   const parmas = useParams();
+  const updateRegexItem = useUpdateRegexItem()
   const handleUpdateItem = (value: string) => {
     updateRegexItem(Number(parmas.id), 'minDepth', Number(value));
   };
@@ -167,6 +173,7 @@ function MaxDepth() {
   const t = useTranslations();
   const [regex, setRegex] = useAtom(regexAtom);
   const parmas = useParams();
+  const updateRegexItem = useUpdateRegexItem()
   const handleUpdateItem = (value: string) => {
     updateRegexItem(Number(parmas.id), 'maxDepth', Number(value));
   };
@@ -188,6 +195,7 @@ function RunOnEdit() {
   const t = useTranslations();
   const [regex, setRegex] = useAtom(regexAtom);
   const parmas = useParams();
+  const updateRegexItem = useUpdateRegexItem()
   const handleUpdate = (value: boolean) => {
     updateRegexItem(Number(parmas.id), 'placement', value);
   };
@@ -203,6 +211,7 @@ function SubstituteRegex() {
   const t = useTranslations();
   const [regex, setRegex] = useAtom(regexAtom);
   const parmas = useParams();
+  const updateRegexItem = useUpdateRegexItem()
   const handleUpdate = (value: boolean) => {
     updateRegexItem(Number(parmas.id), 'substituteRegex', value);
   };
@@ -218,6 +227,7 @@ function MarkdownOnly() {
   const t = useTranslations();
   const [regex, setRegex] = useAtom(regexAtom);
   const parmas = useParams();
+  const updateRegexItem = useUpdateRegexItem()
   const handleUpdate = (value: boolean) => {
     updateRegexItem(Number(parmas.id), 'markdownOnly', value);
   };
@@ -233,6 +243,7 @@ function PromptOnly() {
   const t = useTranslations();
   const [regex, setRegex] = useAtom(regexAtom);
   const parmas = useParams();
+  const updateRegexItem = useUpdateRegexItem()
   const handleUpdate = (value: boolean) => {
     updateRegexItem(Number(parmas.id), 'promptOnly', value);
   };
@@ -252,10 +263,12 @@ function RegexEditor() {
   const [after, setAfter] = useState('');
   const [findRegex, setFindRegex] = useState('');
   const [replaceWith, setReplaceWith] = useState('');
+  const updateFindRegex = useUpdateFindRegex()
   const handleChangeFindRegex = async (value: string) => {
     if (!regex) return;
-    updateFind_Regex(regex.id, value);
+    updateFindRegex(regex.id, value);
   };
+  const updateReplaceString = useUpdateReplaceString()
   const handleChangeReplaceString = async (value: string) => {
     if (!regex) return;
     updateReplaceString(regex.id, value);

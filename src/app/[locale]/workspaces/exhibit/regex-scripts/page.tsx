@@ -30,12 +30,12 @@ import {
 } from '@/components/ui/table';
 import { useRouter } from '@/i18n/routing';
 import {
-  addRegexScript,
-  deleteDuplicateRegex,
-  deleteRegexxScript,
-  exportRegex,
-  getAllRegexScriptLists,
-  importRegex,
+  useAddRegexScript,
+  useDeleteDuplicateRegex,
+  useExportRegex,
+  useGetAllRegexScriptLists,
+  useImportRegex,
+  useDeleteRegexScript,
 } from '@/lib/regex';
 import { atom, useAtom } from 'jotai';
 import { CopyXIcon, EllipsisVerticalIcon, ImportIcon, PlusIcon } from 'lucide-react';
@@ -62,7 +62,7 @@ export default page;
 function Header() {
   const t = useTranslations();
   const [, setIsShowAddRegexScriptModal] = useAtom(addRegexScriptModalAtom);
-
+  const importRegex = useImportRegex()
   return (
     <div className="flex justify-between">
       <div>{t('regex_scripts')}🚧</div>
@@ -81,10 +81,13 @@ function Header() {
 
 function RegexList() {
   const t = useTranslations();
+  const getAllRegexScriptLists = useGetAllRegexScriptLists()
   const lists = getAllRegexScriptLists();
   const router = useRouter();
+  const deleteRegexScript = useDeleteRegexScript()
+  const exportRegex = useExportRegex()
   const handleDeleteRegexScript = (id: number) => {
-    deleteRegexxScript(id);
+    deleteRegexScript(id);
     toast.success(t('dis'));
   };
   return (
@@ -133,6 +136,7 @@ function AddRegexScriptModal() {
   const t = useTranslations();
   const [isShowModal, setIsShowModal] = useAtom(addRegexScriptModalAtom);
   const [scriptName, setScriptName] = useState('');
+  const addRegexScript = useAddRegexScript()
   const handleAddRegexScript = () => {
     addRegexScript(scriptName);
     setScriptName('');
@@ -160,6 +164,7 @@ function AddRegexScriptModal() {
 const DeleteDuplicateRegex = () => {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
+  const deleteDuplicateRegex = useDeleteDuplicateRegex()
   const handleDeleteDuplicate = () => {
     const result = deleteDuplicateRegex();
   };

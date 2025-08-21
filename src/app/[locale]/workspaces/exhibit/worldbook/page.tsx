@@ -38,14 +38,14 @@ import {
 } from '@/components/ui/table';
 import { useRouter } from '@/i18n/routing';
 import {
-  addCharacterBook,
-  copyWorldBook,
-  deleteCharacterBook,
-  deleteDuplicateWorldBook,
-  exportWorldBook,
-  getAllCharacterBookLists,
-  importCharacterBook,
-  updateCharacterBookName,
+  useAddCharacterBook,
+  useCopyWorldBook,
+  useDeleteCharacterBook,
+  useDeleteDuplicateWorldBook,
+  useExportWorldBook,
+  useGetAllCharacterBookLists,
+  useImportCharacterBook,
+  useUpdateCharacterBookName,
   useLiveCharacterBook,
 } from '@/lib/worldbook';
 import { atom, useAtom } from 'jotai';
@@ -76,6 +76,7 @@ export default Page;
 function Header() {
   const t = useTranslations();
   const [, setNewModal] = useAtom(newWorldBookModalAtom);
+  const importCharacterBook = useImportCharacterBook()
   return (
     <div className="flex justify-between">
       <div className="font-bold">{t('worldbook')}🚧</div>
@@ -94,12 +95,15 @@ function Header() {
 
 function WorldbookLists() {
   const t = useTranslations();
+  const getAllCharacterBookLists = useGetAllCharacterBookLists()
   const lists = getAllCharacterBookLists();
   const router = useRouter();
   const [deleteCharacterBookId, setDeleteCharacterBookId] = useState<Number>();
   const [isDeleteCharacterBookModal, setIsDeleteCharacterBookModal] = useState(false);
   const [,setIsNameModalShow] = useAtom(changeNameModalAtom)
   const [action,setAction] = useAtom(actionAtom)
+  const exportWorldBook = useExportWorldBook()
+  const copyWorldBook = useCopyWorldBook()
   const handleDeleteCharacterBook = (id: number) => {
     setDeleteCharacterBookId(id);
     setIsDeleteCharacterBookModal(true);
@@ -127,7 +131,7 @@ function WorldbookLists() {
         </TableHeader>
         <TableBody>
           {lists?.map((list) => (
-            <TableRow key={list.id}>
+            <TableRow key={list.id} onClick={() => handleActionCharacterBook(list.id)}>
               <TableCell className="font-medium">{list.name}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
@@ -175,6 +179,7 @@ function NewCharacterBookModal() {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useAtom(newWorldBookModalAtom);
   const [inputValue, setInputValue] = useState('');
+  const addCharacterBook = useAddCharacterBook()
   const handleNewCharacterBook = async () => {
     await addCharacterBook(inputValue);
     setIsOpen(false);
@@ -210,6 +215,7 @@ function DeleteCharacterBookModal({
   id: number;
 }) {
   const t = useTranslations();
+  const deleteCharacterBook = useDeleteCharacterBook()
   const handleDeleteCharacter = async () => {
     deleteCharacterBook(id);
     setIsOpen(false);
@@ -238,6 +244,7 @@ function DeleteCharacterBookModal({
 const DeleteDuplicateWorldBook = () => {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
+  const deleteDuplicateWorldBook = useDeleteDuplicateWorldBook()
   const handleDeleteDuplicate = () => {
     const result = deleteDuplicateWorldBook();
   };
@@ -275,6 +282,7 @@ function ChangeNameModel() {
   const [name, setName] = useState("");
   const t = useTranslations();
   const worldbook = useLiveCharacterBook(action);
+  const updateCharacterBookName = useUpdateCharacterBookName()
 
   React.useEffect(() => {
     if (worldbook?.name) {

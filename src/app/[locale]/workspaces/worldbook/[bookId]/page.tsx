@@ -1,5 +1,6 @@
 'use client';
 
+import { useDB } from '@/components/db-provider';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,15 +27,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { CharacterBookTable, db } from '@/db/schema';
+import { CharacterBookTable } from '@/db/schema';
 import { useRouter } from '@/i18n/routing';
 import {
-  addCharacterBookEntries,
-  deleteCharacterBookEntries,
-  getCharacterBook,
-  getCharacterBookEntries,
-  updateBookEntry,
-  updateBookEntryItem
+  useAddCharacterBookEntries,
+  useDeleteCharacterBookEntries,
+  useGetCharacterBook,
+  useUpdateBookEntry,
+  useUpdateBookEntryItem
 } from '@/lib/worldbook';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { get } from 'http';
@@ -44,7 +44,7 @@ import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 function page() {
   return (
@@ -60,6 +60,7 @@ export default page;
 function Header() {
   const t = useTranslations();
   const params = useParams();
+  const addCharacterBookEntries = useAddCharacterBookEntries()
   const handleAddEntries = async () => {
     addCharacterBookEntries(Number(params.bookId));
   };
@@ -83,6 +84,9 @@ function EntrieLists() {
   const [entrieLists, setEntrieLists] = useState<EntryType[]>();
   const [deleteCharacterBookEntrieIndex, setDeleteCharacterBookEntrieIndex] = useState<number>();
   const [isDeleteCharacterBookEntrieModal, setIsDeleteCharacterBookEntrieModal] = useState(false);
+  const db = useDB()
+  const getCharacterBook = useGetCharacterBook()
+  const updateBookEntry = useUpdateBookEntry()
 
   const handleEditEntries = (entryId: number) => {
     router.push(`/workspaces/worldbook/${params.bookId}/entries/${entryId}`);
@@ -190,6 +194,7 @@ function DeleteCharacterBookEntrieModal({
   const t = useTranslations();
   const params = useParams();
   const bookId = Number(params.bookId);
+  const deleteCharacterBookEntries = useDeleteCharacterBookEntries()
   const handleDeleteCharacter = async () => {
     try{
     deleteCharacterBookEntries(bookId, index);
@@ -229,6 +234,7 @@ function EntriesEnableSwitch({
 }) {
   const params = useParams();
   const bookId = Number(params.bookId);
+  const updateBookEntryItem = useUpdateBookEntryItem()
   const handleUpdate = async () => {
     if(isEnabled === true){
       await updateBookEntryItem(bookId,entryIndex,'enabled',false)

@@ -29,8 +29,9 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { db } from '@/db/schema';
-import { addGalleryItem, deleteGalleryItem, getGallyList } from '@/lib/gallery';
+// import { db } from '@/db/schema';
+import { useDB } from '@/components/db-provider';
+import { useAddGalleryItem, useDeleteGalleryItem, useGellyList } from '@/lib/gallery';
 import { atom, useAtom } from 'jotai';
 import { CircleHelpIcon, ClipboardMinusIcon, ImportIcon, Loader2, PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -40,7 +41,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 const newGalleryModalAtom = atom(false);
 const exportGalleryModalAtom = atom(false);
@@ -94,6 +95,7 @@ function ImportModal() {
   const [isOpen, setIsOpen] = useAtom(importGalleryModalAtom);
   const [input, setInput] = useState('');
   const [galleryLists, setGalleryLists] = useState<GalleryLists[]>([]);
+  const db = useDB()
   useEffect(() => {
     if (input) {
       const parsedData = input
@@ -174,6 +176,7 @@ function ExportModal() {
   const [isOpen, setIsOpen] = useAtom(exportGalleryModalAtom);
   const [url, setUrl] = useState('');
   const [book, setBook] = useState('');
+  const getGallyList = useGellyList()
   const item = getGallyList(Number(params.id));
   useEffect(() => {
     if (!item) return;
@@ -218,6 +221,7 @@ function DeleteModal() {
   const params = useParams();
   const [isOpen, setIsOpen] = useAtom(deleteGalleryItemModalAtom);
   const [uuid, setUUID] = useAtom(deleteGalleryItemUUID);
+  const deleteGalleryItem = useDeleteGalleryItem()
   const handleDelete = async () => {
     if (!uuid) {
       toast.error('uuid not found');
@@ -252,6 +256,7 @@ function DeleteModal() {
 function GalleryList() {
   const t = useTranslations();
   const params = useParams();
+  const getGallyList = useGellyList()
   const gallery = getGallyList(Number(params.id));
   const lists = gallery?.content;
   const [deleteModal, setDeleteModal] = useAtom(deleteGalleryItemModalAtom);
@@ -297,6 +302,7 @@ function NewGalleryModal() {
   const [input, setInput] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const addGalleryItem = useAddGalleryItem()
 
   const handleChangeImage = () => {
     const input = document.createElement('input');

@@ -4,7 +4,7 @@ import { TokenCounter } from '@/components/tokenCounter';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/routing';
-import { getCharacterField, updateCharacter, usePageGuard } from '@/lib/character';
+import { useCharacterField , useUpdateCharacter, usePageGuard } from '@/lib/character';
 import { selectedCharacterIdAtom } from '@/store/action';
 import { debounce } from 'es-toolkit';
 import { useAtom } from 'jotai';
@@ -29,10 +29,12 @@ function System_Prompt() {
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [inputValue, setInputValue] = useState<string>('');
   const t = useTranslations();
+  const updateCharacter = useUpdateCharacter()
 
   const handleChangeText = debounce(async (value: string) => {
     await updateCharacter(cid as number, 'data.system_prompt' as string, value);
   }, 1000);
+  const getCharacterField = useCharacterField()
 
   useEffect(() => {
     const fetchDefaultValue = async () => {
@@ -46,7 +48,7 @@ function System_Prompt() {
       }
     };
     fetchDefaultValue();
-  }, [cid]);
+  }, [cid, getCharacterField, setInputValue]);
 
   return (
     <>

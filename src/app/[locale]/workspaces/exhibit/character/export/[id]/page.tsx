@@ -26,10 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { db } from '@/db/schema';
-import { exportCharacter } from '@/lib/character';
-import { getAllRegexScriptLists } from '@/lib/regex';
-import { getAllCharacterBookLists } from '@/lib/worldbook';
+// import { db } from '@/db/schema';
+import { useDB } from '@/components/db-provider';
+import { useExportCharacter } from '@/lib/character';
+import { useGetAllRegexScriptLists } from '@/lib/regex';
+import { useGetAllCharacterBookLists } from '@/lib/worldbook';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { DownloadIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -37,7 +38,7 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 function page() {
   return (
@@ -75,6 +76,7 @@ function Preview() {
   const t = useTranslations();
   const params = useParams();
   const cid = Number(params.id);
+  const db = useDB();
   const lists = useLiveQuery(() => {
     return db.character.get(cid);
   });
@@ -153,13 +155,16 @@ function ExportModal({
   const t = useTranslations();
   const params = useParams();
   const cid = Number(params.id);
+  const getAllRegexScriptLists = useGetAllRegexScriptLists()
+  const getAllCharacterBookLists = useGetAllCharacterBookLists()
   const worldbookLists = getAllCharacterBookLists();
   const regexLists = getAllRegexScriptLists();
   const [worldbookId, setWorldBookId] = useState<string>();
   const [regexId, setRegexId] = useState<string[]>([]);
 
   const handleExport = () => {
-    exportCharacter(cid as number, worldbookId, regexId);
+    const f = useExportCharacter();
+    f(cid as number, worldbookId, regexId);
   };
 
   const handleCheckboxChange = (id: number, checked: boolean) => {
