@@ -37,7 +37,7 @@ import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-// export const runtime = 'edge';
+export const runtime = 'edge';
 
 const addCharacterModalAtom = atom(false);
 const characterCoverModalAtom = atom(false);

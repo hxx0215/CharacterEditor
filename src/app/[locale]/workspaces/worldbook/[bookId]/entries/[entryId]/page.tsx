@@ -36,7 +36,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-// export const runtime = 'edge';
+export const runtime = 'edge';
 
 interface CharacterBookEntries {
   keys: Array<string>;

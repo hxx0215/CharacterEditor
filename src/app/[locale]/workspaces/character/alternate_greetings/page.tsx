@@ -64,7 +64,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// export const runtime = 'edge';
+export const runtime = 'edge';
 
 const greetingIndexAtom = atom<string | null>('null');
 const sortGreetingModalAtom = atom<boolean>(false);

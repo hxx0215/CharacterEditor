@@ -41,7 +41,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
 
-// export const runtime = 'edge';
+export const runtime = 'edge';
 
 const newGalleryModalAtom = atom(false);
 const exportGalleryModalAtom = atom(false);
