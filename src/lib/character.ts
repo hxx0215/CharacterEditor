@@ -444,7 +444,6 @@ export function useImportCharacter() {
               },
             };
             if (character) {
-              console.log('add char:', character)
               const rows = await store.addCharacter(character)//await db.character.add(character);
               if (!rows) return;
               toast.success('Add it Character' + character.name, {
