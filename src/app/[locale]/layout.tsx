@@ -6,6 +6,7 @@ import { getMessages, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 import WorkspaceLayout from '@/app/components/MenuLayout';
+import AppInit from '@/components/AppInit';
 
 export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations({ locale });
@@ -46,8 +47,9 @@ export default async function LocaleLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <WorkspaceLayout children={children}/>
-            {/* {children} */}
+            <AppInit>
+              <WorkspaceLayout children={children}/>
+            </AppInit>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

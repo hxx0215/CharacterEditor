@@ -1,16 +1,16 @@
-import { useDB } from '@/components/db-provider';
+import { useCharacterEditorStore } from '@/components/store';
 import { CharacterBookTable } from '@/db/schema';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { omit } from 'es-toolkit/compat';
 import saveAs from 'file-saver';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
 export function useAddCharacterBook(){
-  const db = useDB()
+  // const db = useDB()
+  const addCharacterBook = useCharacterEditorStore(s => s.addCharacterBook)
+  const characterBook = useCharacterEditorStore(s => s.characterBook)
   return useCallback(async (name: string)=>{
-    try {
-      const rows = await db.characterBook.add({
+    const id = await addCharacterBook({
         name: name || 'ooc.moe',
         description: '',
         scan_depth: 0,
@@ -18,76 +18,105 @@ export function useAddCharacterBook(){
         recursive_scanning: false,
         extensions: {},
         entries: [],
-      });
-      return rows;
-    } catch (e) {
-      throw e;
-    }
-  },[db])
+    })
+    return characterBook.find(cb => cb.id === id)
+    // try {
+    //   const rows = await db.characterBook.add({
+    //     name: name || 'ooc.moe',
+    //     description: '',
+    //     scan_depth: 0,
+    //     token_budget: 0,
+    //     recursive_scanning: false,
+    //     extensions: {},
+    //     entries: [],
+    //   });
+    //   return rows;
+    // } catch (e) {
+    //   throw e;
+    // }
+  },[characterBook, addCharacterBook])
 }
 
 export function useGetAllCharacterBookLists(){
-  const db = useDB()
+  // const db = useDB()
+  const characterBook = useCharacterEditorStore(s => s.characterBook)
   return useCallback(() =>{
-    const rows = useLiveQuery(() =>
-      db.characterBook.toArray().then((row) =>
-        row.map(({ id, name }) => ({
-          id,
-          name,
-        })),
-      ),
-    );
-    return rows;
-  }, [db])
+    return characterBook.map(({id, name})=>({
+      id,
+      name
+    }))
+    // const rows = useLiveQuery(() =>
+    //   db.characterBook.toArray().then((row) =>
+    //     row.map(({ id, name }) => ({
+    //       id,
+    //       name,
+    //     })),
+    //   ),
+    // );
+    // return rows;
+  }, [characterBook])
 }
 
 export function useLiveCharacterBook(id: number | undefined) {
-  const db = useDB()
-  return useLiveQuery(async () => {
-    if (!id) return null;
-    return db.characterBook.get(id);
-  }, [id, db]);
+  // const db = useDB()
+  const findCharacterBook = useCharacterEditorStore(s => s.findCharacterBook)
+  if (!id) return null
+  return findCharacterBook(id!)
+  // return useLiveQuery(async () => {
+  //   if (!id) return null;
+  //   return db.characterBook.get(id);
+  // }, [id, db]);
 }
 
 export function useGetCharacterBook(){
-  const db = useDB()
+  // const db = useDB()
+  const findCharacterBook = useCharacterEditorStore(s => s.findCharacterBook)
   return useCallback(async (id: number) =>{
-    try {
-      const rows = db.characterBook.get(id).then((row) => {
-        if (row) {
-          return row;
-        }
-      });
-      return rows;
-    } catch (e) {
-      throw e;
-    }
-  },[db])
+    return await findCharacterBook(id)
+    // try {
+    //   const rows = db.characterBook.get(id).then((row) => {
+    //     if (row) {
+    //       return row;
+    //     }
+    //   });
+    //   return rows;
+    // } catch (e) {
+    //   throw e;
+    // }
+  },[findCharacterBook])
 }
 
 export function useGetCharacterBookEntries(){
-  const db = useDB()
+  // const db = useDB()
+  const findCharacterBook = useCharacterEditorStore(s => s.findCharacterBook)
   return useCallback(async(bid: number, eid: number) =>{
-    try {
-      const rows = await db.characterBook.get(bid).then((item) => {
-        if (item) {
-          const lists = item.entries;
-          const entry = lists.find((list) => list.id === eid);
-          return entry;
-        }
-      });
-      if (rows) {
-        return rows;
-      }
-    } catch (e) {
-      throw e;
+    const rows = await findCharacterBook(bid)
+    if (rows){
+      const lists = rows.entries
+      const entry = lists.find(l => l.id === eid)
+      return entry
     }
-  },[db])
+    // try {
+    //   const rows = await db.characterBook.get(bid).then((item) => {
+    //     if (item) {
+    //       const lists = item.entries;
+    //       const entry = lists.find((list) => list.id === eid);
+    //       return entry;
+    //     }
+    //   });
+    //   if (rows) {
+    //     return rows;
+    //   }
+    // } catch (e) {
+    //   throw e;
+    // }
+  },[findCharacterBook])
 }
 
 export function useUpdateCharacterBookEntriesEnable(){
-  const db = useDB()
+  // const db = useDB()
   const getCharacterBook = useGetCharacterBook()
+  const patchCharacterBook = useCharacterEditorStore(s => s.patchCharacterBook)
   return useCallback(async (entryId: number, bookId: number) =>{
     try {
       const entrys = await getCharacterBook(bookId);
@@ -102,91 +131,112 @@ export function useUpdateCharacterBookEntriesEnable(){
       }
 
       entrys.entries[index].enabled = !entrys.entries[index].enabled;
-      await db.characterBook.update(bookId, { entries: entrys.entries });
+      await patchCharacterBook(bookId, { entries: entrys.entries });
       console.log('Entry updated successfully');
     } catch (e) {
       console.error('Error updating entry:', e);
       throw e;
     }
-  }, [db, getCharacterBook])
+  }, [patchCharacterBook, getCharacterBook])
 }
 
 export function useUpdateBookEntry(){
-  const db = useDB()
+  // const db = useDB()
+  const patchCharacterBook = useCharacterEditorStore(s => s.patchCharacterBook)
   return useCallback(async(bookId: number, value: any)=>{
-    try {
-      const rows = await db.characterBook.update(bookId, {
-        [`entries` as any]: value,
-      });
-      return rows
-    } catch (e) {
-      console.log(e);
-    }
-  },[db])
+    await patchCharacterBook(bookId,{
+      [`entries` as any]: value
+    })
+    return 1
+    // try {
+    //   const rows = await db.characterBook.update(bookId, {
+    //     [`entries` as any]: value,
+    //   });
+    //   return rows
+    // } catch (e) {
+    //   console.log(e);
+    // }
+  },[patchCharacterBook])
 }
 
 export function useUpdateCharacterBookName(){
-  const db = useDB()
+  // const db = useDB()
+  const patchCharacterBook = useCharacterEditorStore(s => s.patchCharacterBook)
   return useCallback(async (id: number, name: string) =>{
-    try {
-      await db.characterBook.update(id, { name: name });
-    } catch (error) {
-      console.log(error);
-    }
-  },[db])
+    await patchCharacterBook(id, {name})
+    // try {
+    //   await db.characterBook.update(id, { name: name });
+    // } catch (error) {
+    //   console.log(error);
+    // }
+  },[patchCharacterBook])
 }
 
 export function useUpdateBookEntryItem(){
-  const db = useDB()
+  // const db = useDB()
+  const patchCharacterBook = useCharacterEditorStore(s => s.patchCharacterBook)
   return useCallback(async (bookId: number, entryIndex: number, field: string, value: any) =>{
-    try {
-      const rows = await db.characterBook.update(bookId, {
-        [`entries.${entryIndex}.${field}` as any]: value,
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  },[db])
+    await patchCharacterBook(bookId,{
+      [`entries.${entryIndex}.${field}` as any]: value,
+    })
+    // try {
+    //   const rows = await db.characterBook.update(bookId, {
+    //     [`entries.${entryIndex}.${field}` as any]: value,
+    //   });
+    // } catch (e) {
+    //   console.log(e);
+    // }
+  },[patchCharacterBook])
 }
 
 
 export function useDeleteCharacterBook(){
-  const db = useDB()
+  // const db = useDB()
+  const deleteCharacterBook = useCharacterEditorStore(s => s.deleteCharacterBook)
   return useCallback(async (id: number) =>{
-    try {
-      const rows = await db.characterBook.delete(id);
-    } catch (e) {
-      throw e;
-    }
-  } ,[db])
+    await deleteCharacterBook(id)
+    // try {
+    //   const rows = await db.characterBook.delete(id);
+    // } catch (e) {
+    //   throw e;
+    // }
+  } ,[deleteCharacterBook])
 }
 
 export function useDeleteCharacterBookEntries(){
-  const db = useDB()
+  // const db = useDB()
+  const characterBook = useCharacterEditorStore(s => s.characterBook)
+  const patchCharacterBook = useCharacterEditorStore(s => s.patchCharacterBook)
   return useCallback(async (id: number, index: number) => {
-    try {
-      const entries = await db.characterBook.get(id).then((item) => {
-        return item?.entries;
-      });
-      if (entries) {
-        const newEntrie = entries.filter((_, i) => i !== index);
-        const rows = await db.characterBook.update(id, { entries: newEntrie });
-        return rows;
-      }
-    } catch (e) {
-      throw e;
+    const entries = characterBook.find(cb => cb.id === id)?.entries
+    if (entries){
+      const newEntrie = entries.filter((_, i) => i!== index)
+      await patchCharacterBook(id, {
+        entries: newEntrie
+      })
     }
+    // try {
+    //   const entries = await db.characterBook.get(id).then((item) => {
+    //     return item?.entries;
+    //   });
+    //   if (entries) {
+    //     const newEntrie = entries.filter((_, i) => i !== index);
+    //     const rows = await db.characterBook.update(id, { entries: newEntrie });
+    //     return rows;
+    //   }
+    // } catch (e) {
+    //   throw e;
+    // }
 
-  },[db])
+  },[characterBook, patchCharacterBook])
 }
 export function useAddCharacterBookEntries(){
-  const db = useDB()
+  // const db = useDB()
+  const patchCharacterBook = useCharacterEditorStore(s => s.patchCharacterBook)
+  const characterBook = useCharacterEditorStore(s => s.characterBook)
   return useCallback(async (id: number)=>{
-    try {
-      const entries = await db.characterBook.get(id).then((item) => {
-        return item?.entries;
-      });
-      if (entries) {
+    const entries = characterBook.find(x => x.id === id)?.entries
+    if (entries){
         const defaultEntries = {
           keys: [],
           content: '',
@@ -204,21 +254,46 @@ export function useAddCharacterBookEntries(){
           position: '',
         };
         const newEntrie = [...entries, defaultEntries];
-        const rows = await db.characterBook.update(id, { entries: newEntrie });
-        return rows;
-      }
-    } catch (e) {
-      throw e;
+        patchCharacterBook(id, {entries: newEntrie})
     }
+    // try {
+    //   const entries = await db.characterBook.get(id).then((item) => {
+    //     return item?.entries;
+    //   });
+    //   if (entries) {
+    //     const defaultEntries = {
+    //       keys: [],
+    //       content: '',
+    //       extensions: {},
+    //       enabled: false,
+    //       insertion_order: 0,
+    //       case_sensitive: false,
+    //       name: '',
+    //       priority: 0,
+    //       id: undefined,
+    //       comment: '',
+    //       selective: false,
+    //       secondary_keys: [],
+    //       constant: false,
+    //       position: '',
+    //     };
+    //     const newEntrie = [...entries, defaultEntries];
+    //     const rows = await db.characterBook.update(id, { entries: newEntrie });
+    //     return rows;
+    //   }
+    // } catch (e) {
+    //   throw e;
+    // }
 
-  },[db])
+  },[characterBook, patchCharacterBook])
 }
 
 export function useExportWorldBook(){
-  const db = useDB()
+  // const db = useDB()
+  const characterBook = useCharacterEditorStore(s => s.characterBook)
   return useCallback(async(id: number) =>{
     try {
-      const rows: CharacterBookTable | undefined = await db.characterBook.get(id);
+      const rows: CharacterBookTable | undefined = characterBook.find(cb => cb.id === id);
       if (!rows) return;
 
       const formattedData = {
@@ -298,12 +373,13 @@ export function useExportWorldBook(){
       console.error(e);
     }
 
-  },[db])
+  },[characterBook])
 }
 
 
 export function useImportCharacterBook(){
-  const db = useDB()
+  // const db = useDB()
+  const addCharacterBook = useCharacterEditorStore(s => s.addCharacterBook)
   return useCallback(async()=>{
     try {
       const handleSelectFile = () => {
@@ -353,7 +429,7 @@ export function useImportCharacterBook(){
               role:entry.role
             })),
           };
-          db.characterBook.add(characterBook);
+          await addCharacterBook(characterBook);
           toast.success('OK');
         };
         input.click();
@@ -364,32 +440,32 @@ export function useImportCharacterBook(){
       console.log('Import failed:', e);
     }
 
-  },[db])
+  },[addCharacterBook])
 
 }
 
 export function useCopyWorldBook(){
-  const db = useDB()
+  const store = useCharacterEditorStore()
   return useCallback(async(id: number)=>{
     try {
-      const rows = await db.characterBook.get(id);
+      const rows = store.characterBook.find(cb => cb.id === id);
       if (!rows) return;
       const book = omit(rows, ['id']);
-      db.characterBook.add(book);
+      store.addCharacterBook(book);
       toast.success('OK');
     } catch (e) {
       console.log(e);
     }
-  },[db])
+  },[store])
 }
 
 export function useDeleteDuplicateWorldBook(){
-  const db = useDB()
+  const store = useCharacterEditorStore()
   return useCallback(async()=>{
     try {
-      const allEntries = await db.characterBook
-        .toArray()
-        .then((items) => items.map(({ id, entries }) => ({ id, entries })));
+      const allEntries = store.characterBook.map(({id, entries}) => ({id, entries}))
+        // .toArray()
+        // .then((items) => items.map(({ id, entries }) => ({ id, entries })));
       const entriesMap = new Map();
       allEntries.forEach((item) => {
         const key = JSON.stringify(item.entries);
@@ -406,13 +482,13 @@ export function useDeleteDuplicateWorldBook(){
         }
       }
       if (idsToDelete.length > 0) {
-        return db.characterBook.bulkDelete(idsToDelete);
+        return store.batchDeleteCharacterBooks(idsToDelete);
       }
       return Promise.resolve();
     } catch (error) {
       console.log(error);
     }
 
-  },[db])
+  },[store])
 }
 

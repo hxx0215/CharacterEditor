@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 // import { db } from '@/db/schema';
-import { useDB } from '@/components/db-provider';
 import { useRouter } from '@/i18n/routing';
 import {
   useAddCharacter,
@@ -36,6 +35,7 @@ import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useCharacterEditorStore } from '@/components/store';
 
 export const runtime = 'edge';
 
@@ -435,11 +435,13 @@ function ChangeCoverModal() {
   const [isShow, setIsShow] = useAtom(characterCoverModalAtom);
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [cover, setCover] = useState('');
-  const db = useDB();
+  // const db = useDB();
+  const character = useCharacterEditorStore(s => s.character)
+  const patchCharacter = useCharacterEditorStore(s => s.patchCharacter)
 
   useEffect(() => {
     const fetchData = async () => {
-      const item = await db.character.get(cid);
+      const item = character.find(c => c.id === cid);
       const cover = item?.cover;
 
       if (cover) {
@@ -448,7 +450,7 @@ function ChangeCoverModal() {
     };
 
     fetchData();
-  }, [cid, db]);
+  }, [cid, character]);
   const handleChangeCover = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -470,10 +472,13 @@ function ChangeCoverModal() {
     };
     input.click();
   };
-  const handleUpdateCover = () => {
-    db.character.update(cid, {
-      cover: cover,
-    });
+  const handleUpdateCover = async () => {
+    // db.character.update(cid, {
+    //   cover: cover,
+    // });
+    await patchCharacter(cid,{
+      cover
+    })
     setIsShow(false);
     toast.success('OK');
   };
@@ -509,11 +514,13 @@ function ChangeNameModal() {
   const [isShow, setIsShow] = useAtom(characterNameModalAtom);
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [name, setName] = useState('');
-  const db = useDB()
+  // const db = useDB()
+  const character = useCharacterEditorStore(s => s.character)
+  const patchCharacter = useCharacterEditorStore(s => s.patchCharacter)
 
   useEffect(() => {
     const fetchData = async () => {
-      const item = await db.character.get(cid);
+      const item = character.find(c => c.id === cid)
       const name = item?.name;
 
       if (name) {
@@ -522,12 +529,13 @@ function ChangeNameModal() {
     };
 
     fetchData();
-  }, [cid, db]);
+  }, [cid, character]);
 
-  const handleUpdateName = () => {
-    db.character.update(cid, {
-      name: name,
-    });
+  const handleUpdateName = async () => {
+    // db.character.update(cid, {
+    //   name: name,
+    // });
+    await patchCharacter(cid, {name})
     setIsShow(false);
     toast.success('OK');
   };

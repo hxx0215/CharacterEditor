@@ -1,6 +1,6 @@
 'use client';
 
-import { useDB } from '@/components/db-provider';
+import { useCharacterEditorStore } from '@/components/store';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,6 @@ import {
   useUpdateReplaceString,
   useUpdateScriptName,
 } from '@/lib/regex';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { pull } from 'es-toolkit';
 import { atom, useAtom } from 'jotai';
 import { useTranslations } from 'next-intl';
@@ -29,13 +28,18 @@ export default function RegexEdit() {
   const [regex, setRegex] = useAtom(regexAtom);
   const t = useTranslations();
   const parmas = useParams();
-  const db = useDB()
-  useLiveQuery(() => {
-    db.regexScripts.get(Number(parmas.id)).then((item) => {
-      if (!item) return;
-      setRegex(item);
-    });
-  });
+  const regexScripts = useCharacterEditorStore(s => s.regexScripts)
+  const item = regexScripts.find(r => r.id === Number(parmas.id))
+  if (item){
+    setRegex(item)
+  }
+  // const db = useDB()
+  // useLiveQuery(() => {
+  //   db.regexScripts.get(Number(parmas.id)).then((item) => {
+  //     if (!item) return;
+  //     setRegex(item);
+  //   });
+  // });
 
   return (
     <Tabs defaultValue="profile" className="w-full">

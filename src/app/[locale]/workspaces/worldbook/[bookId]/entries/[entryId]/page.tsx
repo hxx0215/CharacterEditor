@@ -1,6 +1,6 @@
 'use client';
 
-import { useDB } from '@/components/db-provider';
+import { useCharacterEditorStore } from '@/components/store';
 import { TokenCounter } from '@/components/tokenCounter';
 import {
   AlertDialog,
@@ -27,7 +27,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 // import { db } from '@/db/schema';
 import { useUpdateBookEntryItem } from '@/lib/worldbook';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { pullAt } from 'es-toolkit';
 import { atom, useAtom } from 'jotai';
 import { PlusIcon, XIcon } from 'lucide-react';
@@ -68,14 +67,16 @@ function Header() {
   const [, setEntries] = useAtom(entriesAtom);
   const t = useTranslations();
   const params = useParams();
-  const db = useDB();
-  const entries = useLiveQuery(() =>
-    db.characterBook.get(Number(params.bookId)).then((item) => {
-      if (item) {
-        return item.entries[Number(params.entryId)];
-      }
-    }),
-  );
+  // const db = useDB();
+  const characterBook = useCharacterEditorStore(s => s.characterBook)
+  const entries = characterBook.find(cb => cb.id === Number(params.bookId))?.entries[Number(params.entryId)]
+  // const entries = useLiveQuery(() =>
+  //   db.characterBook.get(Number(params.bookId)).then((item) => {
+  //     if (item) {
+  //       return item.entries[Number(params.entryId)];
+  //     }
+  //   }),
+  // );
   useEffect(() => {
     setEntries(entries);
   }, [entries]);

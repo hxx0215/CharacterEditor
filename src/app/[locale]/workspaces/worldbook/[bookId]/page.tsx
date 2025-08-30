@@ -1,6 +1,6 @@
 'use client';
 
-import { useDB } from '@/components/db-provider';
+import { useCharacterEditorStore } from '@/components/store';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +36,6 @@ import {
   useUpdateBookEntry,
   useUpdateBookEntryItem
 } from '@/lib/worldbook';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { get } from 'http';
 import { EllipsisVerticalIcon, PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -84,20 +83,22 @@ function EntrieLists() {
   const [entrieLists, setEntrieLists] = useState<EntryType[]>();
   const [deleteCharacterBookEntrieIndex, setDeleteCharacterBookEntrieIndex] = useState<number>();
   const [isDeleteCharacterBookEntrieModal, setIsDeleteCharacterBookEntrieModal] = useState(false);
-  const db = useDB()
+  // const db = useDB()
   const getCharacterBook = useGetCharacterBook()
   const updateBookEntry = useUpdateBookEntry()
+  const characterBook = useCharacterEditorStore(s => s.characterBook)
 
   const handleEditEntries = (entryId: number) => {
     router.push(`/workspaces/worldbook/${params.bookId}/entries/${entryId}`);
   };
-  const book = useLiveQuery(() => {
-    return db.characterBook.get(Number(params.bookId)).then((item) => {
-      if (item) {
-        return item.entries;
-      }
-    });
-  });
+  const book = characterBook.find(cb => cb.id === Number(params.bookId))?.entries
+  // const book = useLiveQuery(() => {
+  //   return db.characterBook.get(Number(params.bookId)).then((item) => {
+  //     if (item) {
+  //       return item.entries;
+  //     }
+  //   });
+  // });
 
   const handleDeleteCharacterBookEntrie = (index: number) => {
     setDeleteCharacterBookEntrieIndex(index);

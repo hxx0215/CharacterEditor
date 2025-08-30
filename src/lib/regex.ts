@@ -1,6 +1,5 @@
 'use client'
-import { useDB } from '@/components/db-provider';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useCharacterEditorStore } from '@/components/store';
 import saveAs from 'file-saver';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
@@ -24,41 +23,49 @@ const regexScriptsTableSchema = z.object({
 });
 
 export function useGetAllRegexScriptLists(){
-  const db = useDB()
+  // const db = useDB()
+  const regexScripts = useCharacterEditorStore(s => s.regexScripts)
   return useCallback(()=>{
-    const rows = useLiveQuery(() =>
-      db.regexScripts.toArray().then((row) =>
-        row.map(({ id, uuid, scriptName }) => ({
-          id,
-          uuid,
-          scriptName,
-        })),
-      ),
-    );
-    return rows;
-  },[db])
+    return regexScripts.map(({id, uuid, scriptName}) =>({
+      id,
+      uuid,
+      scriptName
+    }))
+    // const rows = useLiveQuery(() =>
+    //   db.regexScripts.toArray().then((row) =>
+    //     row.map(({ id, uuid, scriptName }) => ({
+    //       id,
+    //       uuid,
+    //       scriptName,
+    //     })),
+    //   ),
+    // );
+    // return rows;
+  },[regexScripts])
 }
 
 export function useGetRegexScript(){
-  const db = useDB()
+  // const db = useDB()
+  const regexScripts = useCharacterEditorStore(s => s.regexScripts)
   return useCallback((id: number)=>{
-    try {
-      const rows = db.regexScripts.get(id).then((row) => {
-        if (row) {
-          return row;
-        }
-      });
-      return rows;
-    } catch (e) {
-      throw e;
-    }
-  },[db])
+    return regexScripts.find(r => r.id === id)
+    // try {
+    //   const rows = db.regexScripts.get(id).then((row) => {
+    //     if (row) {
+    //       return row;
+    //     }
+    //   });
+    //   return rows;
+    // } catch (e) {
+    //   throw e;
+    // }
+  },[regexScripts])
 }
 
 export function useAddRegexScript(){
-  const db = useDB()
+  const addRegexScript = useCharacterEditorStore(s => s.addRegexScript)
   return useCallback(async (scriptName: string)=>{
-    const rows = await db.regexScripts.add({
+    const rows = await addRegexScript({
       uuid: uuidv4(),
       scriptName: scriptName,
       findRegex: '',
@@ -73,18 +80,20 @@ export function useAddRegexScript(){
       minDepth: 0,
       maxDepth: 0,
     });
-  },[db])
+  },[addRegexScript])
 }
 
 export function useDeleteRegexScript(){
-  const db = useDB()
+  // const db = useDB()
+  const deleteRegexScript = useCharacterEditorStore(s => s.deleteRegexScript)
   return useCallback(async (id: number) =>{
-    const rows = await db.regexScripts.delete(id);
-  },[db])
+    const rows = await deleteRegexScript(id);
+  },[deleteRegexScript])
 }
 
 export function useImportRegex(){
-  const db = useDB()
+  // const db = useDB()
+  const addRegexScript = useCharacterEditorStore(s => s.addRegexScript)
   return useCallback(async ()=>{
     const input = document.createElement('input');
     input.type = 'file';
@@ -107,102 +116,121 @@ export function useImportRegex(){
           minDepth: rest.minDepth,
           maxDepth: rest.maxDepth,
         };
-        await db.regexScripts.add(regex);
+        await addRegexScript(regex);
         toast.success('Add Regex:' + regex.scriptName);
       } catch (e) {
         throw e;
       }
   };
   input.click();
-  },[db])
+  },[addRegexScript])
 }
 
 export function useUpdateScriptName(){
-  const db = useDB()
+  const patchRegexScript = useCharacterEditorStore(s => s.patchRegexScript)
   return useCallback(async(id: number, value: string)=>{
-    try {
-      const rows = await db.regexScripts.update(id, { scriptName: value });
-      if (!rows) return '!ERROR';
-      console.log(rows);
-    } catch (e) {
-      console.log(e);
-    }
-  },[db])
+    await patchRegexScript(id, { scriptName: value });
+    return '!OK';
+    // try {
+    //   const rows = await patchRegexScript(id, { scriptName: value });
+    //   if (!rows) return '!ERROR';
+    //   console.log(rows);
+    // } catch (e) {
+    //   console.log(e);
+    // }
+  },[patchRegexScript])
 }
 
 export function useUpdateFindRegex(){
-  const db = useDB()
+  const patchRegexScript = useCharacterEditorStore(s => s.patchRegexScript)
   return useCallback(async(id: number, value: string) =>{
-    try {
-      const rows = await db.regexScripts.update(id, { findRegex: value });
-      if (!rows) return '!ERROR';
-      console.log(rows);
-    } catch (e) {
-      console.log(e);
-      return;
-    }
-  }, [db])
+    await patchRegexScript(id, { findRegex: value });
+    // try {
+    //   const rows = await db.regexScripts.update(id, { findRegex: value });
+    //   if (!rows) return '!ERROR';
+    //   console.log(rows);
+    // } catch (e) {
+    //   console.log(e);
+    //   return;
+    // }
+  }, [patchRegexScript])
 }
 
 
 export function useUpdateReplaceString(){
-  const db = useDB()
+  // const db = useDB()
+  const patchRegexScript = useCharacterEditorStore(s => s.patchRegexScript)
   return useCallback(async(id: number, value: string) =>{
-    try {
-      const rows = await db.regexScripts.update(id, { replaceString: value });
-      if (!rows) return '!ERROR';
-      console.log(rows);
-    } catch (e) {
-      console.log(e);
-      return;
-    }
-  }, [db])
+    await patchRegexScript(id, { replaceString: value });
+    // try {
+    //   const rows = await db.regexScripts.update(id, { replaceString: value });
+    //   if (!rows) return '!ERROR';
+    //   console.log(rows);
+    // } catch (e) {
+    //   console.log(e);
+    //   return;
+    // }
+  }, [patchRegexScript])
 }
 
 export function useUpdateIsEnable(){
-  const db = useDB()
+  // const db = useDB()
+  const regexScripts = useCharacterEditorStore(s => s.regexScripts)
+  const patchRegexScript = useCharacterEditorStore(s => s.patchRegexScript)
   return useCallback(async (id: number) =>{
-    try {
-      const currentItem = await db.regexScripts.get(id);
-      if (!currentItem) {
-        return '!ERROR: Item not found';
-      }
-      const currentDisabled = currentItem.disabled;
-
-      const newDisabled = !currentDisabled;
-
-      const rows = await db.regexScripts.update(id, { disabled: newDisabled });
-
-      if (!rows) return '!ERROR: Update failed';
-
-      console.log('Update successful, new disabled value:', newDisabled);
-      return newDisabled;
-    } catch (e) {
-      console.error('Error updating disabled value:', e);
-      return '!ERROR: ';
+    const currentItem = regexScripts.find(r => r.id === id)
+    if (!currentItem){
+      return '!ERROR: Item not found'
     }
+    const currentDisabled = currentItem.disabled
+    const newDisabled = !currentDisabled
+    const rows = await patchRegexScript(id, {disabled: newDisabled})
+    return newDisabled
+    // try {
+    //   const currentItem = await db.regexScripts.get(id);
+    //   if (!currentItem) {
+    //     return '!ERROR: Item not found';
+    //   }
+    //   const currentDisabled = currentItem.disabled;
 
-  },[db])
+    //   const newDisabled = !currentDisabled;
+
+    //   const rows = await db.regexScripts.update(id, { disabled: newDisabled });
+
+    //   if (!rows) return '!ERROR: Update failed';
+
+    //   console.log('Update successful, new disabled value:', newDisabled);
+    //   return newDisabled;
+    // } catch (e) {
+    //   console.error('Error updating disabled value:', e);
+    //   return '!ERROR: ';
+    // }
+
+  },[regexScripts, patchRegexScript])
 }
 
 export function useUpdateRegexItem(){
-  const db = useDB()
+  // const db = useDB()
+  const patchRegexScript = useCharacterEditorStore(s => s.patchRegexScript)
   return useCallback(async (regexId: number, field: string, value: any)=>{
-    try {
-      const rows = await db.regexScripts.update(regexId, {
-        [`${field}` as any]: value,
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  },[db])
+    await patchRegexScript(regexId, {
+      [`${field}` as any]: value
+    })
+    // try {
+    //   const rows = await db.regexScripts.update(regexId, {
+    //     [`${field}` as any]: value,
+    //   });
+    // } catch (e) {
+    //   console.log(e);
+    // }
+  },[patchRegexScript])
 }
 
 export function useExportRegex(){
-  const db = useDB()
+  const regexScripts = useCharacterEditorStore(s => s.regexScripts)
   return useCallback(async(regexId: number) =>{
     try {
-      const rows = await db.regexScripts.get(regexId);
+      const rows = regexScripts.find(r => r.id === regexId);
       if (!rows) return;
       const regex = {
         id: rows.uuid,
@@ -226,14 +254,16 @@ export function useExportRegex(){
       console.log(e);
     }
 
-  },[db])
+  },[regexScripts])
 }
 
 export function useDeleteDuplicateRegex(){
-  const db = useDB()
+  // const db = useDB()
+  const regexScripts = useCharacterEditorStore(s => s.regexScripts)
+  const batchDeleteRegexScripts = useCharacterEditorStore(s => s.batchDeleteRegexScripts)
   return useCallback(async() =>{
     try {
-      const allRecords = await db.regexScripts.toArray();
+      const allRecords = regexScripts
       const hashGroups = new Map();
 
       allRecords.forEach((record) => {
@@ -255,13 +285,13 @@ export function useDeleteDuplicateRegex(){
       }
 
       if (deletionIds.length > 0) {
-        return db.regexScripts.bulkDelete(deletionIds);
+        return await batchDeleteRegexScripts(deletionIds);
       }
       return Promise.resolve();
     } catch (error) {
       console.log(error);
     }
 
-  },[db])
+  },[batchDeleteRegexScripts, regexScripts])
 }
 

@@ -1,7 +1,6 @@
 'use client'
 import { useRouter } from '@/i18n/routing';
 import { selectedCharacterIdAtom } from '@/store/action';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { get, omit } from 'es-toolkit/compat';
 import { saveAs } from 'file-saver';
 import { useAtom } from 'jotai';
@@ -12,188 +11,236 @@ import extract from 'png-chunks-extract';
 import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
-import { CharacterTable, RegexScriptsTable } from '../db/schema';
+import type { CharacterTable, RegexScriptsTable } from '../db/schema';
 import { useGetCharacterBook } from './worldbook';
-import { useDB } from '@/components/db-provider';
+import { useCharacterEditorStore } from '@/components/store';
 
 export function useAllCharacterLists() {
-  const db = useDB()
-  return useLiveQuery(() =>
-    db.character.toArray().then((row) =>
-      row.map(({ id, name, cover, data }) => ({
-        id,
-        name,
-        cover,
-        creator: data.creator,
-        character_version: data.character_version,
-      })),
-    ),
-    [db]);
+  const ls = useCharacterEditorStore(s => s.character)
+  return ls.map(({ id, name, cover, data }) => ({
+    id,
+    name,
+    cover,
+    create: data.creator,
+    character_version: data.character_version
+  }))
+  // const db = useDB()
+  // return useLiveQuery(() =>
+  //   db.character.toArray().then((row) =>
+  //     row.map(({ id, name, cover, data }) => ({
+  //       id,
+  //       name,
+  //       cover,
+  //       creator: data.creator,
+  //       character_version: data.character_version,
+  //     })),
+  //   ),
+  //   [db]);
 }
 
 export function useCharacter() {
-  const db = useDB()
+  const cs = useCharacterEditorStore(s => s.character)
   return useCallback((cid: number) => {
-    try {
-      const rows = db.character.get(cid).then((row) => {
-        if (row) {
-          return row;
-        }
-      });
-      return rows;
-    } catch (e) {
-      throw e;
-    }
-  }, [db])
+    return cs.find(c => c.id === cid)
+    // try {
+    // const rows = db.character.get(cid).then((row) => {
+    //   if (row) {
+    //     return row;
+    //   }
+    // });
+    // } catch (e) {
+    //   throw e;
+    // }
+  }, [cs])
 }
 
 export function useCharacterField() {
-  const db = useDB()
+  const cs = useCharacterEditorStore(s => s.character)
   return useCallback(async (cid: number, field: string) => {
-    try {
-      const rows = await db.character.get(cid);
-      if (rows) {
-        return get(rows, field);
-      }
-    } catch (e) {
-      throw e;
+    // try {
+    //   const rows = await db.character.get(cid);
+    //   if (rows) {
+    //     return get(rows, field);
+    //   }
+    // } catch (e) {
+    //   throw e;
+    // }
+    const ch = cs.find(c => c.id === cid)
+    if (ch) {
+      return get(ch, field)
     }
-  }, [db])
+  }, [cs])
 }
 
 export function useAddCharacter() {
-  const db = useDB()
+  const addCharacter = useCharacterEditorStore(s => s.addCharacter)
   return useCallback(async (name: string, cover: string) => {
-    try {
-      const rows = await db.character.add({
-        cover: cover,
+    const c: Omit<CharacterTable, 'id'> = {
+      cover: cover,
+      name: name,
+      description: '',
+      personality: '',
+      scenario: '',
+      first_mes: '',
+      mes_example: '',
+      spec: '',
+      spec_version: '',
+      data: {
         name: name,
         description: '',
         personality: '',
         scenario: '',
         first_mes: '',
         mes_example: '',
-        spec: '',
-        spec_version: '',
-        data: {
-          name: name,
-          description: '',
-          personality: '',
-          scenario: '',
-          first_mes: '',
-          mes_example: '',
-          creator_notes: '',
-          system_prompt: '',
-          post_history_instructions: '',
-          alternate_greetings: [],
-          tags: [],
-          creator: '',
-          character_version: '',
-          extensions: [],
-        },
-      });
-    } catch (e) {
-      throw e;
-    }
-
-  }, [db])
-}
-
-export function useAddCharacterGreetings(){
-  const db = useDB();
-  const updateCharacter = useUpdateCharacter()
-  return useCallback(async (id: number) =>{
-    try {
-      const lists = await db.character.get(id).then((list) => {
-        if (list) {
-          return list.data.alternate_greetings;
-        }
-      });
-      if (lists) {
-        const newGreetings = [...lists, ''];
-        updateCharacter(id, 'data.alternate_greetings', newGreetings);
+        creator_notes: '',
+        system_prompt: '',
+        post_history_instructions: '',
+        alternate_greetings: [],
+        tags: [],
+        creator: '',
+        character_version: '',
+        extensions: [],
       }
-    } catch (e) {
-      throw e;
     }
-  },[db, updateCharacter])
+    await addCharacter(c)
+    // try {
+    //   const rows = await db.character.add(c);
+    // } catch (e) {
+    //   throw e;
+    // }
+
+  }, [addCharacter])
 }
 
-export function useDeleteCharacter(){
-  const db = useDB()
-  return useCallback(async(id: number) =>{
-    try {
-      const row = await db.character.delete(id);
-    } catch (e) {
-      throw e;
-    }
-  },[db])
-}
-
-export function useDeleteCharacterGreetings(){
-  const db = useDB()
+export function useAddCharacterGreetings() {
+  // const db = useDB();
+  const findCharacter = useCharacterEditorStore(s => s.findCharacter)
   const updateCharacter = useUpdateCharacter()
-  return useCallback(async(id: number, index:number) =>{
-    try {
-      const lists = await db.character.get(id).then((list) => {
-        if (list) {
-          return list.data.alternate_greetings;
-        }
-      });
-      if (lists) {
-        const newGreetings = [...lists];
-        newGreetings.splice(index, 1);
-        updateCharacter(id, 'data.alternate_greetings', newGreetings);
-      }
-    } catch (e) {
-      throw e;
+  return useCallback(async (id: number) => {
+    const ch = await findCharacter(id)
+    if (ch) {
+      const gs = ch.data.alternate_greetings;
+      const newGreetings = [...gs, '']
+      await updateCharacter(id, 'data.alternate_greetings', newGreetings)
     }
-  },[db, updateCharacter])
+    // try {
+    //   const lists = await db.character.get(id).then((list) => {
+
+    //     if (list) {
+    //       return list.data.alternate_greetings;
+    //     }
+    //   });
+    //   if (lists) {
+    //     const newGreetings = [...lists, ''];
+    //     updateCharacter(id, 'data.alternate_greetings', newGreetings);
+    //   }
+    // } catch (e) {
+    //   throw e;
+    // }
+  }, [findCharacter, updateCharacter])
 }
 
-export function useUpdateSpecV1Character(){
-  const db = useDB()
+export function useDeleteCharacter() {
+  const deleteCharacter = useCharacterEditorStore(s => s.deleteCharacter)
+  return useCallback(async (id: number) => {
+    // try {
+    //   const row = await db.character.delete(id);
+    // } catch (e) {
+    //   throw e;
+    // }
+    await deleteCharacter(id)
+  }, [deleteCharacter])
+}
+
+export function useDeleteCharacterGreetings() {
+  // const db = useDB()
+  const updateCharacter = useUpdateCharacter()
+  const findCharacter = useCharacterEditorStore(s => s.findCharacter)
+  return useCallback(async (id: number, index: number) => {
+    const ch = await findCharacter(id)
+    if (ch){
+      const gs = ch.data.alternate_greetings
+      const newGs = [...gs]
+      newGs.splice(index, 1)
+      await updateCharacter(id, 'data.alternate_greetings', newGs);
+    }
+    // try {
+    //   const lists = await db.character.get(id).then((list) => {
+    //     if (list) {
+    //       return list.data.alternate_greetings;
+    //     }
+    //   });
+    //   if (lists) {
+    //     const newGreetings = [...lists];
+    //     newGreetings.splice(index, 1);
+    //     updateCharacter(id, 'data.alternate_greetings', newGreetings);
+    //   }
+    // } catch (e) {
+    //   throw e;
+    // }
+  }, [findCharacter, updateCharacter])
+}
+
+export function useUpdateSpecV1Character() {
+  const patchCharacter = useCharacterEditorStore(s => s.patchCharacter)
   return useCallback(async (id: number, field: keyof CharacterTable, value: any) => {
-    try {
-      const rows = await db.character.update(id, {
-        [field]: value,
-        [`data.${field}`]: value,
-      });
-      return rows;
-    } catch (e) {
-      throw e;
-    }
-  },[db])
+    await patchCharacter(id, {
+      [field]: value,
+      [`data.${field}`]: value
+    })
+    // try {
+    //   const rows = await db.character.update(id, {
+    //     [field]: value,
+    //     [`data.${field}`]: value,
+    //   });
+    //   return rows;
+    // } catch (e) {
+    //   throw e;
+    // }
+  }, [patchCharacter])
 }
 
-export function useUpdateCharacter(){
-  const db = useDB()
-  return useCallback(async(id: number, field: string, value: any) => {
-    try {
-      const rows = await db.character.update(id, { [field]: value });
-      return rows;
-    } catch (e) {
-      throw e;
-    }
-  },[db])
+export function useUpdateCharacter() {
+  // const db = useDB()
+  const updateCharacter = useCharacterEditorStore(s => s.updateCharacter)
+  return useCallback(async (id: number, field: string, value: any) => {
+    await updateCharacter(id, field, value)
+    return 1 
+    // try {
+    //   const rows = await db.character.update(id, { [field]: value });
+    //   return rows;
+    // } catch (e) {
+    //   throw e;
+    // }
+  }, [updateCharacter])
 }
 
-export function useUpdateCharacterGreeting(){
-  const db = useDB()
+export function useUpdateCharacterGreeting() {
+  // const db = useDB()
+  const store = useCharacterEditorStore()
+  const patchCharacter = store.patchCharacter
+  const findCharacter = store.findCharacter
   return useCallback(async (id: number, index: number, value: string) => {
-    try {
-      const rows = await db.character.update(id, {
-        [`data.alternate_greetings.${index}`]: value,
-      });
-    } catch (e) {
-      throw e;
+    const oldChar = await findCharacter(id)
+    if (oldChar){
+      oldChar.data.alternate_greetings[index] = value
+      await patchCharacter(id, oldChar)
     }
-  }, [db])
+    // try {
+    //   const rows = await db.character.update(id, {
+    //     [`data.alternate_greetings.${index}`]: value,
+    //   });
+    // } catch (e) {
+    //   throw e;
+    // }
+  }, [findCharacter, patchCharacter])
 }
 
-export function useImportCharacters(){
-  const db = useDB()
-  return useCallback(()=>{
+export function useImportCharacters() {
+  const addCharacter = useCharacterEditorStore(s => s.addCharacter)
+  const addCharacterBook = useCharacterEditorStore(s => s.addCharacterBook)
+  const addRegexScript = useCharacterEditorStore(s => s.addRegexScript)
+  return useCallback(() => {
     const handleSelectFile = () => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -263,7 +310,7 @@ export function useImportCharacters(){
                     extensions: c.data.extensions,
                   },
                 };
-                const rows = await db.character.add(character);
+                const rows = await addCharacter(character);
                 if (!rows) return;
                 toast.success('Added Character: ' + character.name, {
                   id: 'IMPORT_CHARACTER_NAME',
@@ -280,7 +327,7 @@ export function useImportCharacters(){
                   extensions: c.data.character_book.extensions,
                   entries: c.data.character_book.entries,
                 };
-                const rows = await db.characterBook.add(characterBook);
+                const rows =await addCharacterBook(characterBook) //await db.characterBook.add(characterBook);
                 if (!rows) return;
                 toast.success(characterBook.name, {
                   id: 'IMPORT_CHARACTER_BOOK',
@@ -305,7 +352,7 @@ export function useImportCharacters(){
                     maxDepthL: item.maxDepth,
                   };
                 });
-                const rows = await db.regexScripts.bulkAdd(regex as RegexScriptsTable[]);
+                const rows = Promise.all((regex as RegexScriptsTable[]).map(r => addRegexScript(r))) //await db.regexScripts.bulkAdd(regex as RegexScriptsTable[]);
                 if (!rows) return;
                 toast.success('Added Regex Scripts', {
                   id: 'IMPORT_CHARACTER_REGEX',
@@ -332,12 +379,13 @@ export function useImportCharacters(){
 
     handleSelectFile(); // Invoke the file selection function
 
-  },[db])
+  }, [addCharacter, addCharacterBook, addRegexScript])
 }
 
-export function useImportCharacter(){
-  const db = useDB();
-  return useCallback(()=>{
+export function useImportCharacter() {
+  // const db = useDB();
+  const store = useCharacterEditorStore()
+  return useCallback(() => {
     const handleSelectFile = () => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -396,7 +444,7 @@ export function useImportCharacter(){
               },
             };
             if (character) {
-              const rows = await db.character.add(character);
+              const rows = await store.addCharacter(character)//await db.character.add(character);
               if (!rows) return;
               toast.success('Add it Character' + character.name, {
                 id: 'IMPORT_CHARACTER_NAME',
@@ -413,7 +461,7 @@ export function useImportCharacter(){
                 extensions: c.data.character_book.extensions,
                 entries: c.data.character_book.entries,
               };
-              const rows = await db.characterBook.add(characterBook);
+              const rows = await store.addCharacterBook(characterBook) //await db.characterBook.add(characterBook);
               if (!rows) return;
               toast.success('Add it CharacterBook' + characterBook.name, {
                 id: 'IMPORT_CHARACTER_BOOK',
@@ -437,7 +485,7 @@ export function useImportCharacter(){
                   maxDepthL: item.maxDepth,
                 };
               });
-              const rows = db.regexScripts.bulkAdd(regex as RegexScriptsTable[]);
+              const rows = Promise.all((regex as RegexScriptsTable[]).map(r => store.addRegexScript(r))) //db.regexScripts.bulkAdd(regex as RegexScriptsTable[]);
               if (!rows) return;
               toast.success('Add it' + regex.scriptName, {
                 id: 'IMPORT_CHARACTER_REGEX',
@@ -452,31 +500,34 @@ export function useImportCharacter(){
     };
     handleSelectFile();
 
-  },[db])
+  }, [store])
 }
 
-export function useCopyCharacter(){
-  const db = useDB()
-  return useCallback(async (id: number)=>{
-    try {
-      const rows = await db.character.get(id);
-      if (!rows) return;
-      const char = omit(rows, ['id']);
-      db.character.add(char);
-      toast.success('OK');
-    } catch (e) {
-      console.log(e);
-    }
-  },[db])
+export function useCopyCharacter() {
+  // const db = useDB()
+  const duplicateCharacter = useCharacterEditorStore(s => s.duplicateCharacter)
+  return useCallback(async (id: number) => {
+    await duplicateCharacter(id)
+    toast.success('OK');
+    // try {
+    //   const rows = await db.character.get(id);
+    //   if (!rows) return;
+    //   const char = omit(rows, ['id']);
+    //   db.character.add(char);
+    //   toast.success('OK');
+    // } catch (e) {
+    //   console.log(e);
+    // }
+  }, [duplicateCharacter])
 }
 
 export function useExportCharacter() {
-  const db = useDB()
   const getCharacter = useCharacter()
   const getCharacterBook = useGetCharacterBook()
+  const batchFindRegexScript = useCharacterEditorStore(s => s.batchFindRegexScript)
   return useCallback(async (cid: number, worldbookId?: string, regexId?: string[]) => {
     try {
-      const c = await getCharacter(cid);
+      const c = getCharacter(cid);
       if (!c) return;
 
       const characterData = {
@@ -515,7 +566,7 @@ export function useExportCharacter() {
       }
 
       if (regexId && regexId.length > 0) {
-        const regexScripts = await db.regexScripts.bulkGet(regexId.map(Number));
+        const regexScripts = await batchFindRegexScript(regexId.map(Number)) //await db.regexScripts.bulkGet(regexId.map(Number));
 
         if (regexScripts && regexScripts.length > 0) {
           const formattedRegexScripts = regexScripts
@@ -547,7 +598,7 @@ export function useExportCharacter() {
       throw e;
     }
 
-  }, [db, getCharacter, getCharacterBook])
+  }, [getCharacter, getCharacterBook, batchFindRegexScript])
 }
 
 

@@ -30,7 +30,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 // import { db } from '@/db/schema';
-import { useDB } from '@/components/db-provider';
 import {
   useAddCharacterGreetings,
   useDeleteCharacterGreetings,
@@ -39,7 +38,6 @@ import {
   usePageGuard,
 } from '@/lib/character';
 import { selectedCharacterIdAtom } from '@/store/action';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { debounce } from 'es-toolkit';
 import { atom, useAtom } from 'jotai';
 import { ArrowUpDownIcon, PlusIcon, Trash2Icon } from 'lucide-react';
@@ -63,6 +61,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useCharacterEditorStore } from '@/components/store';
 
 export const runtime = 'edge';
 
@@ -88,16 +87,18 @@ function Header() {
   const [index, setIndex] = useAtom(greetingIndexAtom);
   const [isShow, setIsShow] = useAtom(deleteModalAtom);
   const [isSortDialogOpen,setIsSortDialogOpen] = useAtom(sortGreetingModalAtom);
-  const db = useDB()
+  // const db = useDB()
   const addCharacterGreetings = useAddCharacterGreetings()
-  const lists = useLiveQuery(() => {
-    const rows = db.character.get(cid).then((list) => {
-      if (list) {
-        return list.data.alternate_greetings;
-      }
-    });
-    return rows;
-  });
+  const character = useCharacterEditorStore(s => s.character)
+  const lists = character.find(c => c.id === cid)?.data.alternate_greetings
+  // const lists = useLiveQuery(() => {
+  //   const rows = db.character.get(cid).then((list) => {
+  //     if (list) {
+  //       return list.data.alternate_greetings;
+  //     }
+  //   });
+  //   return rows;
+  // });
   const handleAddCharacterGreetings = async () => {
     addCharacterGreetings(cid as number);
     toast.success(t('ais'));
@@ -147,26 +148,27 @@ function Alternate_Greetings() {
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [index, setIndex] = useAtom(greetingIndexAtom);
   const [greeting, setGreeting] = useState('');
-  const db = useDB()
+  // const db = useDB()
   const updateCharacterGreeting = useUpdateCharacterGreeting()
-
+  const character = useCharacterEditorStore(s => s.character)
   const handleChangeText = debounce(async (value: string) => {
     await updateCharacterGreeting(cid as number, Number(index), value as string);
   }, 1000);
   const t = useTranslations();
   useEffect(() => {
     const fetchData = async () => {
-      const rows = await db.character.get(cid).then((item) => {
-        if (item) {
-          return item.data.alternate_greetings[Number(index)];
-        }
-      });
+      const rows = character.find(c => c.id === cid)?.data.alternate_greetings[Number(index)]
+      // const rows = await db.character.get(cid).then((item) => {
+      //   if (item) {
+      //     return item.data.alternate_greetings[Number(index)];
+      //   }
+      // });
       if (rows) {
         setGreeting(rows);
       }
     };
     fetchData();
-  }, [index, db]);
+  }, [index, character]);
   return (
     <>
       {index !== 'null' ? (
@@ -195,16 +197,18 @@ function DeleteModal() {
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [index, setIndex] = useAtom(greetingIndexAtom);
   const [isShow, setIsShow] = useAtom(deleteModalAtom);
-  const db = useDB()
+  // const db = useDB()
   const deleteCharacterGreetings = useDeleteCharacterGreetings()
-  const lists = useLiveQuery(() => {
-    const rows = db.character.get(cid).then((list) => {
-      if (list) {
-        return list.data.alternate_greetings;
-      }
-    });
-    return rows;
-  });
+  const character = useCharacterEditorStore(s => s.character)
+  const lists = character.find(c => c.id === cid)?.data.alternate_greetings
+  // const lists = useLiveQuery(() => {
+  //   const rows = db.character.get(cid).then((list) => {
+  //     if (list) {
+  //       return list.data.alternate_greetings;
+  //     }
+  //   });
+  //   return rows;
+  // });
   const handleDeleteCharacterGreetings = async () => {
     deleteCharacterGreetings(cid as number, Number(index));
     if (lists && lists.length > 1) {
@@ -241,7 +245,7 @@ const SortGreetingModalAtom = () => {
   const [isOpen, setIsOpen] = useAtom(sortGreetingModalAtom);
   const [cid] = useAtom(selectedCharacterIdAtom);
   const [sortList, setSortList] = React.useState<string[]>([]);
-  const db = useDB()
+  // const db = useDB()
   const updateCharacter = useUpdateCharacter()
   
   const handleSave = async () => {
@@ -305,10 +309,11 @@ const SortGreetingModalAtom = () => {
       </div>
     );
   };
-
-  const lists = useLiveQuery(() => {
-    return db.character.get(cid).then(list => list?.data.alternate_greetings);
-  });
+  const character = useCharacterEditorStore(s => s.character)
+  // const lists = useLiveQuery(() => {
+  //   return db.character.get(cid).then(list => list?.data.alternate_greetings);
+  // });
+  const lists = character.find(c => c.id === cid)?.data.alternate_greetings
 
   React.useEffect(() => {
     if (lists) setSortList(lists);

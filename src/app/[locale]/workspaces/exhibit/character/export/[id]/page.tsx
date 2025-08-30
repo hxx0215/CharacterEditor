@@ -27,16 +27,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 // import { db } from '@/db/schema';
-import { useDB } from '@/components/db-provider';
 import { useExportCharacter } from '@/lib/character';
 import { useGetAllRegexScriptLists } from '@/lib/regex';
 import { useGetAllCharacterBookLists } from '@/lib/worldbook';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { DownloadIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
+import { useCharacterEditorStore } from '@/components/store';
 
 export const runtime = 'edge';
 
@@ -76,10 +75,12 @@ function Preview() {
   const t = useTranslations();
   const params = useParams();
   const cid = Number(params.id);
-  const db = useDB();
-  const lists = useLiveQuery(() => {
-    return db.character.get(cid);
-  });
+  // const db = useDB();
+  const character = useCharacterEditorStore(s => s.character)
+  const lists = character.find(c => c.id === cid)
+  // const lists = useLiveQuery(() => {
+  //   return db.character.get(cid);
+  // });
   return (
     <>
       {lists ? (

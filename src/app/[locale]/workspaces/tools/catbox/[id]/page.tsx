@@ -30,7 +30,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 // import { db } from '@/db/schema';
-import { useDB } from '@/components/db-provider';
 import { useAddGalleryItem, useDeleteGalleryItem, useGellyList } from '@/lib/gallery';
 import { atom, useAtom } from 'jotai';
 import { CircleHelpIcon, ClipboardMinusIcon, ImportIcon, Loader2, PlusIcon } from 'lucide-react';
@@ -40,6 +39,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
+import { useCharacterEditorStore } from '@/components/store';
 
 export const runtime = 'edge';
 
@@ -95,7 +95,8 @@ function ImportModal() {
   const [isOpen, setIsOpen] = useAtom(importGalleryModalAtom);
   const [input, setInput] = useState('');
   const [galleryLists, setGalleryLists] = useState<GalleryLists[]>([]);
-  const db = useDB()
+  // const db = useDB()
+  const patchGallery = useCharacterEditorStore(s => s.patchGallery)
   useEffect(() => {
     if (input) {
       const parsedData = input
@@ -124,9 +125,12 @@ function ImportModal() {
         url: item.url,
       };
     });
-    db.gallery.update(Number(params.id), {
-      content: entry,
-    });
+    await patchGallery(Number(params.id),{
+      content: entry
+    })
+    // db.gallery.update(Number(params.id), {
+    //   content: entry,
+    // });
     setIsOpen(false);
     toast.success('Ok,没看见内容请检查格式');
   };

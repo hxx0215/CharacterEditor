@@ -1,5 +1,4 @@
 'use client'
-import Dexie, { EntityTable } from 'dexie';
 
 interface CharacterTable {
   id: number;
@@ -86,22 +85,7 @@ interface GalleryTable {
   }>;
 }
 
-type DexieType = Dexie & {
-  character: EntityTable<CharacterTable, 'id'>;
-  characterBook: EntityTable<CharacterBookTable, 'id'>;
-  regexScripts: EntityTable<RegexScriptsTable, 'id'>;
-  gallery: EntityTable<GalleryTable, 'id'>;
-};
 
 
-const db = new Dexie('OoC-CharacterEditor') as DexieType
-db.version(1).stores({
-  character: '++id',
-  characterBook: '++id',
-  regexScripts: '++id',
-  gallery: '++id',
-});
-
-export { db };
-export type { CharacterBookTable, CharacterTable, RegexScriptsTable , DexieType};
+export type { CharacterBookTable, CharacterTable, RegexScriptsTable ,  GalleryTable};
 

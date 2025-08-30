@@ -14,12 +14,10 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { usePathname } from '@/i18n/routing';
-import { DexieProvider } from '@/components/db-provider';
 
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const segments = usePathname().split('/').filter(Boolean);
   return (
-    <DexieProvider>
       <>
         <div className="hidden h-full md:block">
           <SidebarProvider className="h-full">
@@ -65,6 +63,5 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         </div>
         <Toaster richColors position="top-center" />
       </>
-    </DexieProvider>
   );
 }
