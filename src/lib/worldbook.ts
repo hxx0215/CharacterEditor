@@ -59,9 +59,9 @@ export function useGetAllCharacterBookLists(){
 
 export function useLiveCharacterBook(id: number | undefined) {
   // const db = useDB()
-  const findCharacterBook = useCharacterEditorStore(s => s.findCharacterBook)
+  const characterBook = useCharacterEditorStore(s => s.characterBook)
   if (!id) return null
-  return findCharacterBook(id!)
+  return characterBook.find(cb => cb.id === id)
   // return useLiveQuery(async () => {
   //   if (!id) return null;
   //   return db.characterBook.get(id);

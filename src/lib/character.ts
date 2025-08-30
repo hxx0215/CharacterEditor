@@ -393,7 +393,7 @@ export function useImportCharacter() {
       input.onchange = async (event: any) => {
         const file = event.target.files?.[0];
         if (!file || !file.type.startsWith('image/png')) return console.warn('Invalid file');
-
+        console.log('changed')
         try {
           const base64Image = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
@@ -444,6 +444,7 @@ export function useImportCharacter() {
               },
             };
             if (character) {
+              console.log('add char:', character)
               const rows = await store.addCharacter(character)//await db.character.add(character);
               if (!rows) return;
               toast.success('Add it Character' + character.name, {

@@ -74,16 +74,7 @@ export const useCharacterEditorStore = create<Store>(
     },
     addEntity: async (s: StoreNames<CharacterEditorDBType>, entity: Omit<StoreValue<CharacterEditorDBType, StoreNames<CharacterEditorDBType>>,'id'>) =>{
       const {db} = await import('@/db/character-db')
-      const fake = {
-        ...entity,
-        id: -1
-      } as CharacterBookTable | CharacterTable
-      const x = await db.add(s, fake)
-      const real = {
-        ...entity,
-        id:x
-      }as CharacterBookTable | CharacterTable
-      await db.put(s, real, x)
+      const x = await db.add(s, entity as StoreValue<CharacterEditorDBType, StoreNames<CharacterEditorDBType>>)
       await get().sync(s) // just appended it to characters
       return x
     },
