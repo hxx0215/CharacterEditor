@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +31,7 @@ import {
 } from '@/lib/character';
 import { selectedCharacterIdAtom } from '@/store/action';
 import { atom, useAtom } from 'jotai';
-import { EllipsisVerticalIcon, FileStackIcon, ImportIcon, PlusIcon } from 'lucide-react';
+import { EllipsisVerticalIcon, FileStackIcon, ImportIcon, PlusIcon, BabyIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
@@ -67,10 +68,15 @@ function Header() {
   const [, setIsImportCharacterModalShow] = useAtom(importCharacterModalAtom);
   const importCharacters = useImportCharacters()
   const importCharacter = useImportCharacter()
+  const babyMode = useCharacterEditorStore(s => s.babyMode)
+  const setBabyMode = useCharacterEditorStore(s => s.setBabyMode)
   return (
     <div className="sticky flex items-center justify-between">
       <div className="font-bold">{t('character')}</div>
       <div className="flex gap-x-2">
+        <Button variant={babyMode ? 'secondary' : 'outline'} size="icon" onClick={() => setBabyMode(!babyMode)}>
+          <BabyIcon />
+        </Button>
         <Button variant="outline" size="icon" onClick={() => setIsAddCharacterModalShow(true)}>
           <PlusIcon />
         </Button>
@@ -132,76 +138,38 @@ function CharacterLists() {
     setIsChangeCoverModal(true);
     setActionCharacterId(id);
   };
-  
+
   const handleChangeName = (id: number) => {
     setIsChangeNameModal(true);
     setActionCharacterId(id);
   };
 
   const lists = useAllCharacterLists();
-  console.log(lists)
+  const babyMode = useCharacterEditorStore(s => s.babyMode)
   return (
     <>
       <ul className="3xl:grid-cols-8 4xl:grid-cols-9 5xl:grid-cols-10 6xl:grid-cols-11 7xl:grid-cols-12 hidden gap-x-4 gap-y-8 md:grid md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
         {lists?.map((list) => {
-          if (list.id === actionCharacterid)
-            return (
-              <li key={list.id}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <div className="relative inline-block">
+          const isActive = list.id === actionCharacterid
+          return (
+            <li key={list.id} className={!isActive ? "group hover:opacity-90" : undefined}>
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <div className="relative inline-block">
+                    {isActive && (
                       <span className="absolute right-2 top-2 flex size-3">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
                         <span className="relative inline-flex size-3 rounded-full bg-amber-500"></span>
                       </span>
-                      <Image
-                        className="aspect-[3/4] h-full rounded-xl object-cover"
-                        src={list.cover}
-                        alt={list.name}
-                        width={521}
-                        height={521}
-                      />
-                    </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => handleActionCharacter(list.id, list.name)}>
-                      {t('edit')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExportCharacter(list.id)}>
-                      {t('export')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => copyCharacter(list.id)}>
-                      {t('copy')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleChangeCover(list.id)}>
-                      {t('Character.change_cover')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
-                      Change Name
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="hove:text-red-400 text-red-500"
-                      onClick={() => handleDeleteCharacter(list.id)}
-                    >
-                      {t('delete')}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div className="pointer-events-none truncate text-xs font-medium">{list.name}</div>
-                <div className="pointer-events-none truncate text-xs">{list.character_version}</div>
-              </li>
-            );
-          return (
-            <li key={list.id} className="group hover:opacity-90">
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Image
-                    className="aspect-[3/4] h-full rounded-xl object-cover"
-                    src={list.cover}
-                    alt={list.name}
-                    width={521}
-                    height={521}
-                  />
+                    )}
+                    <Image
+                      className="aspect-[3/4] h-full rounded-xl object-cover"
+                      src={babyMode ?  '/bbbs.jpg': list.cover }
+                      alt={list.name}
+                      width={521}
+                      height={521}
+                    />
+                  </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => handleActionCharacter(list.id, list.name)}>
@@ -217,8 +185,8 @@ function CharacterLists() {
                     {t('Character.change_cover')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
-                      Change Name
-                    </DropdownMenuItem>
+                    Change Name
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     className="hove:text-red-400 text-red-500"
                     onClick={() => handleDeleteCharacter(list.id)}
@@ -230,7 +198,7 @@ function CharacterLists() {
               <div className="pointer-events-none truncate text-xs font-medium">{list.name}</div>
               <div className="pointer-events-none truncate text-xs">{list.character_version}</div>
             </li>
-          );
+          )
         })}
       </ul>
 
@@ -322,8 +290,8 @@ function CharacterLists() {
                     {t('Character.change_cover')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleChangeName(list.id)}>
-                      Change Name
-                    </DropdownMenuItem>
+                    Change Name
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     className="hove:text-red-400 text-red-500"
                     onClick={() => handleDeleteCharacter(list.id)}
@@ -535,7 +503,7 @@ function ChangeNameModal() {
     // db.character.update(cid, {
     //   name: name,
     // });
-    store.patchCharacter(cid,{
+    store.patchCharacter(cid, {
       name
     })
     setIsShow(false);
@@ -548,7 +516,7 @@ function ChangeNameModal() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Character.change_cover')}</AlertDialogTitle>
             <AlertDialogDescription>
-              <Input value={name} onChange={(e)=>setName(e.target.value)}/>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
