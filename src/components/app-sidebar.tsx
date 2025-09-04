@@ -24,7 +24,7 @@ const data = {
       items: [
         {
           title: "character",
-          url: "/workspaces/exhibit/character",
+          url: "/",
         },
         {
           title: "worldbook",
